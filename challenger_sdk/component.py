@@ -5,7 +5,7 @@ import typing
 from typing import NotRequired
 import inspect
 
-from sdk.ebbot import Bot, Chat, Company, Message, User
+from challenger_sdk.ebbot import Bot, Chat, Company, Message, User
 
 ArgumentType = typing.Literal[
     "string",
