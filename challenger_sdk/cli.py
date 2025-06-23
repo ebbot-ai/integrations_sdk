@@ -44,8 +44,36 @@ def create_secret(name: str, secret: str, bot_id: str | None = None):
 
 
 @app.command()
-def hello():
-    print("Hello there")
+def create_env(name: str, value: str, bot_id: str | None = None):
+    url = os.getenv("CHALLENGER_URL")
+    if not url:
+        raise Exception(
+            "Challenger URL not present in your env file or your environment."
+        )
+    token = os.getenv("CHALLENGER_TOKEN")
+    if not token:
+        raise Exception(
+            "CHALLENGER_TOKEN not present in your env file or your environment."
+        )
+
+    if not bot_id:
+        bot_id = os.getenv("BOT_ID")
+
+    if not bot_id:
+        raise Exception(
+            "Bot ID must be provided either as an argument or as a BOT_ID environment variable."
+        )
+
+    headers = {"Authorization": f"Bearer {token}"}
+    data = {"name": name, "value": value}
+    response = requests.post(
+        f"{url}/api/bots/{bot_id}/env-variables", json=data, headers=headers
+    )
+    if response.status_code != 201:
+        raise Exception(
+            f"Could not save env variable: {response.status_code} {response.reason}"
+        )
+    print("Environment variable saved successfully!")
 
 
 if __name__ == "__main__":
