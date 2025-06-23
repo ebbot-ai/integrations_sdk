@@ -32,3 +32,7 @@ def create_secret(name: str, value: str, bot_id: str | None = None):
             f"Could not save secret: {response.status_code} {response.reason}"
         )
     print("Secret saved successfully!")
+
+
+if __name__ == "__main__":
+    app()

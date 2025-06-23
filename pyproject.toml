@@ -24,3 +24,6 @@ build-backend = "poetry.core.masonry.api"
 [project.urls]
 Homepage = "https://github.com/ebbot-ai/challenger-sdk"
 "Bug Tracker" = "https://github.com/ebbot-ai/challenger-sdk"
+
+[tool.poetry.scripts]
+challenger = "challenger_sdk.cli:app"
