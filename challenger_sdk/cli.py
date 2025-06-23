@@ -23,6 +23,14 @@ def create_secret(name: str, secret: str, bot_id: str | None = None):
             "CHALLENGER_TOKEN not present in your env file or your environment."
         )
 
+    if not bot_id:
+        bot_id = os.getenv("BOT_ID")
+
+    if not bot_id:
+        raise Exception(
+            "Bot ID must be provided either as an argument or as a BOT_ID environment variable."
+        )
+
     headers = {"Authorization": f"Bearer {token}"}
     data = {"name": name, "secret": secret}
     response = requests.post(
