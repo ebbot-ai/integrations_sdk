@@ -24,7 +24,7 @@ def test_create_secret():
         create_secret("secret", "value", "bot-id")
         mock_request.assert_called_with(
             "http://example.com/api/bots/bot-id/secrets",
-            json={"name": "secret", "value": "value"},
+            json={"name": "secret", "secret": "value"},
             headers={"Authorization": "Bearer example-token"},
         )
 

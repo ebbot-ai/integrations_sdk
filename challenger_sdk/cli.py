@@ -11,7 +11,7 @@ app = typer.Typer()
 
 
 @app.command()
-def create_secret(name: str, value: str, bot_id: str | None = None):
+def create_secret(name: str, secret: str, bot_id: str | None = None):
     url = os.getenv("CHALLENGER_URL")
     if not url:
         raise Exception(
@@ -24,7 +24,7 @@ def create_secret(name: str, value: str, bot_id: str | None = None):
         )
 
     headers = {"Authorization": f"Bearer {token}"}
-    data = {"name": name, "value": value}
+    data = {"name": name, "secret": secret}
     response = requests.post(
         f"{url}/api/bots/{bot_id}/secrets", json=data, headers=headers
     )
