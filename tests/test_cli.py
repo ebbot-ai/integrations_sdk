@@ -27,3 +27,13 @@ def test_create_secret():
             json={"name": "secret", "value": "value"},
             headers={"Authorization": "Bearer example-token"},
         )
+
+
+def test_create_secret_error():
+    os.environ["CHALLENGER_URL"] = "http://example.com"
+    os.environ["CHALLENGER_TOKEN"] = "example-token"
+    with patch("requests.post") as mock_request:
+        mock_request.return_value.status_code = 400
+        mock_request.return_value.reason = "Bad Request"
+        with pytest.raises(Exception, match="Could not save secret: 400 Bad Request"):
+            create_secret("secret", "value", "bot-id")
