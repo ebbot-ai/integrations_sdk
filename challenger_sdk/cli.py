@@ -43,5 +43,10 @@ def create_secret(name: str, secret: str, bot_id: str | None = None):
     print("Secret saved successfully!")
 
 
+@app.command()
+def hello():
+    print("Hello there")
+
+
 if __name__ == "__main__":
     app()
