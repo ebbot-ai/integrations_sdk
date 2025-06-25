@@ -1,6 +1,13 @@
 import os
 import pytest
-from challenger_sdk.cli import create_secret, create_env
+from challenger_sdk.cli import (
+    create_secret,
+    create_env,
+    set_debug,
+    set_persona,
+    set_mcp_servers,
+    set_endeavour_servers,
+)
 from unittest.mock import patch
 
 
@@ -92,7 +99,9 @@ def test_create_env_error():
     with patch("requests.post") as mock_request:
         mock_request.return_value.status_code = 400
         mock_request.return_value.reason = "Bad Request"
-        with pytest.raises(Exception, match="Could not save env variable: 400 Bad Request"):
+        with pytest.raises(
+            Exception, match="Could not save env variable: 400 Bad Request"
+        ):
             create_env("env-name", "env-value", "bot-id")
     del os.environ["CHALLENGER_URL"]
     del os.environ["CHALLENGER_TOKEN"]
@@ -122,5 +131,121 @@ def test_create_env_missing_bot_id():
         del os.environ["BOT_ID"]
     with pytest.raises(Exception, match="Bot ID must be provided"):
         create_env("env-name", "env-value")
+    del os.environ["CHALLENGER_URL"]
+    del os.environ["CHALLENGER_TOKEN"]
+
+
+def test_set_debug():
+    os.environ["CHALLENGER_URL"] = "http://example.com"
+    os.environ["CHALLENGER_TOKEN"] = "example-token"
+    with patch("requests.patch") as mock_request:
+        mock_request.return_value.status_code = 201
+        set_debug(True, "bot-id")
+        mock_request.assert_called_with(
+            "http://example.com/api/bots/bot-id/config",
+            json={"debug": True},
+            headers={"Authorization": "Bearer example-token"},
+        )
+    del os.environ["CHALLENGER_URL"]
+    del os.environ["CHALLENGER_TOKEN"]
+
+
+def test_set_debug_error():
+    os.environ["CHALLENGER_URL"] = "http://example.com"
+    os.environ["CHALLENGER_TOKEN"] = "example-token"
+    with patch("requests.patch") as mock_request:
+        mock_request.return_value.status_code = 400
+        mock_request.return_value.reason = "Bad Request"
+        with pytest.raises(
+            Exception, match="Could not set debug flag: 400 Bad Request"
+        ):
+            set_debug(True, "bot-id")
+    del os.environ["CHALLENGER_URL"]
+    del os.environ["CHALLENGER_TOKEN"]
+
+
+def test_set_persona():
+    os.environ["CHALLENGER_URL"] = "http://example.com"
+    os.environ["CHALLENGER_TOKEN"] = "example-token"
+    with patch("requests.patch") as mock_request:
+        mock_request.return_value.status_code = 201
+        set_persona("friendly", "bot-id")
+        mock_request.assert_called_with(
+            "http://example.com/api/bots/bot-id/config",
+            json={"persona": "friendly"},
+            headers={"Authorization": "Bearer example-token"},
+        )
+    del os.environ["CHALLENGER_URL"]
+    del os.environ["CHALLENGER_TOKEN"]
+
+
+def test_set_persona_error():
+    os.environ["CHALLENGER_URL"] = "http://example.com"
+    os.environ["CHALLENGER_TOKEN"] = "example-token"
+    with patch("requests.patch") as mock_request:
+        mock_request.return_value.status_code = 400
+        mock_request.return_value.reason = "Bad Request"
+        with pytest.raises(
+            Exception, match="Could not set persona: 400 Bad Request"
+        ):
+            set_persona("friendly", "bot-id")
+    del os.environ["CHALLENGER_URL"]
+    del os.environ["CHALLENGER_TOKEN"]
+
+
+def test_set_mcp_servers():
+    os.environ["CHALLENGER_URL"] = "http://example.com"
+    os.environ["CHALLENGER_TOKEN"] = "example-token"
+    with patch("requests.patch") as mock_request:
+        mock_request.return_value.status_code = 201
+        set_mcp_servers(["server1", "server2"], "bot-id")
+        mock_request.assert_called_with(
+            "http://example.com/api/bots/bot-id/config",
+            json={"mcpServers": ["server1", "server2"]},
+            headers={"Authorization": "Bearer example-token"},
+        )
+    del os.environ["CHALLENGER_URL"]
+    del os.environ["CHALLENGER_TOKEN"]
+
+
+def test_set_mcp_servers_error():
+    os.environ["CHALLENGER_URL"] = "http://example.com"
+    os.environ["CHALLENGER_TOKEN"] = "example-token"
+    with patch("requests.patch") as mock_request:
+        mock_request.return_value.status_code = 400
+        mock_request.return_value.reason = "Bad Request"
+        with pytest.raises(
+            Exception, match="Could not set MCP servers: 400 Bad Request"
+        ):
+            set_mcp_servers(["server1"], "bot-id")
+    del os.environ["CHALLENGER_URL"]
+    del os.environ["CHALLENGER_TOKEN"]
+
+
+def test_set_endeavour_servers():
+    os.environ["CHALLENGER_URL"] = "http://example.com"
+    os.environ["CHALLENGER_TOKEN"] = "example-token"
+    with patch("requests.patch") as mock_request:
+        mock_request.return_value.status_code = 201
+        set_endeavour_servers(["server1", "server2"], "bot-id")
+        mock_request.assert_called_with(
+            "http://example.com/api/bots/bot-id/config",
+            json={"endeavourServers": ["server1", "server2"]},
+            headers={"Authorization": "Bearer example-token"},
+        )
+    del os.environ["CHALLENGER_URL"]
+    del os.environ["CHALLENGER_TOKEN"]
+
+
+def test_set_endeavour_servers_error():
+    os.environ["CHALLENGER_URL"] = "http://example.com"
+    os.environ["CHALLENGER_TOKEN"] = "example-token"
+    with patch("requests.patch") as mock_request:
+        mock_request.return_value.status_code = 400
+        mock_request.return_value.reason = "Bad Request"
+        with pytest.raises(
+            Exception, match="Could not set Endeavour servers: 400 Bad Request"
+        ):
+            set_endeavour_servers(["server1"], "bot-id")
     del os.environ["CHALLENGER_URL"]
     del os.environ["CHALLENGER_TOKEN"]
