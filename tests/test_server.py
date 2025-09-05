@@ -12,7 +12,7 @@ def test_get_components():
     assert response.status_code == 200
     data = response.json()
     retrieve_user = get_component(data, "retrieve_user")
-    assert len(data) == 3
+    assert len(data) == 4
     assert retrieve_user is not None
     assert retrieve_user["ebbotArguments"] == ["user"]
     store_favorite_food = get_component(data, "store_favorite_food")
@@ -70,6 +70,24 @@ def test_call_component_llm_args():
                 "data": {"dish": "Spaghetti"},
             }
         ],
+    }
+
+
+def test_call_workflow_action():
+    response = client.post(
+        "/call",
+        json={
+            "name": "say_hello",
+            "ebbot_data": {},
+            "llm_arguments": {"name": "Spaghetti"},
+            "secrets": {},
+            "env": {},
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() == {
+        "actions": None,
+        "result": "Hello Spaghetti",
     }
 
 

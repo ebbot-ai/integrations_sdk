@@ -151,6 +151,10 @@ class ToolResult(typing.TypedDict):
     actions: NotRequired[Actions]
 
 
+class ActionResult(typing.TypedDict):
+    result: typing.Any
+
+
 @dataclass
 class CompanyEnv:
     info: dict[str, str]
@@ -170,6 +174,26 @@ def component(
             description=description,
             ebbot_arguments=ebbot_arguments,
             llm_arguments=llm_arguments,
+            secrets=secrets,
+            env=env,
+            call=func,
+        )
+
+    return decorator
+
+
+def workflow_action(
+    description: str,
+    env: list[str] = [],
+    secrets: list[str] = [],
+    arguments: LLMArguments = {},
+) -> typing.Callable[[typing.Callable[..., ActionResult]], EbbotComponent]:
+    def decorator(func: typing.Callable[..., ActionResult]) -> EbbotComponent:
+        return EbbotComponent(
+            name=func.__name__,
+            description=description,
+            ebbot_arguments=[],
+            llm_arguments=arguments,
             secrets=secrets,
             env=env,
             call=func,
