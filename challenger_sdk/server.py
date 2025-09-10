@@ -7,7 +7,7 @@ import typing
 from challenger_sdk.component import (
     Actions,
     ChatHistory,
-    CompanyEnv,
+    FunctionEnv,
     EbbotArgument,
     EbbotComponent,
 )
@@ -15,6 +15,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ValidationInfo, field_validator
 
 from challenger_sdk.ebbot import Bot, Chat, Company, Message, User
+from challenger_sdk.manifest import create_manifest
 
 
 class ComponentCall(BaseModel):
@@ -150,6 +151,10 @@ def start_server(path, title="Challenger sdk server"):
                     )
             return value
 
+    @app.get("/manifest")
+    def get_manifest():
+        return create_manifest(list(fns.values()))
+
     @app.get("/components")
     def list_fns() -> list[ComponentResponse]:
         components = []
@@ -174,7 +179,7 @@ def start_server(path, title="Challenger sdk server"):
         sig = inspect.signature(component.call)
         extra_args = {}
         if "env" in sig.parameters:
-            extra_args["env"] = CompanyEnv(tool.env, tool.secrets)
+            extra_args["env"] = FunctionEnv(tool.env, tool.secrets)
 
         logger.info(f"Calling tool {tool.name}")
         result = component.call(**extra_args, **tool.ebbot_data, **tool.llm_arguments)

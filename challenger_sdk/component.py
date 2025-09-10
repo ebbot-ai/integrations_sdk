@@ -160,6 +160,7 @@ class CompanyEnv:
     info: dict[str, str]
     secrets: dict[str, str]
 
+FunctionEnv = CompanyEnv
 
 def component(
     description: str,

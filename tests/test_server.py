@@ -91,5 +91,41 @@ def test_call_workflow_action():
     }
 
 
+def test_manifest_data():
+    response = client.get(
+        "/manifest",
+    )
+    assert response.status_code == 200
+    data = response.json()
+    component = data["actions"][0]
+    assert component["name"] == "store_favorite_food"
+    assert (
+        component["description"]
+        == "The user wants to tell you about their favorite food."
+    )
+    assert component["schema"]["call"]["type"] == "function"
+    call = component["schema"]["call"]["function"]
+    assert call["name"] == "store_favorite_food"
+    assert (
+        call["description"] == "The user wants to tell you about their favorite food."
+    )
+    assert call["parameters"]["type"] == "object"
+    print(call["parameters"])
+
+    assert call["parameters"]["properties"]["dish"]["type"] == "string"
+    assert call["parameters"]["required"] == ["dish"]
+
+
+def test_manifest_exclude_ebbot():
+    response = client.get(
+        "/manifest",
+    )
+    assert response.status_code == 200
+    data = response.json()
+    print([action["name"] for action in data["actions"]])
+    # Update user requires ebbot arguments and should not be included.
+    assert get_component(data["actions"], "retrieve_user") == None
+
+
 def get_component(data: list[dict], name: str) -> dict | None:
     return next((component for component in data if component["name"] == name), None)
