@@ -53,6 +53,8 @@ class LLMArgument(typing.TypedDict):
 
 LLMArguments = dict[str, LLMArgument]
 
+ResultType = typing.Union[Type[BaseModel], dict]
+
 
 class EbbotComponent(BaseModel):
     name: str
@@ -62,7 +64,8 @@ class EbbotComponent(BaseModel):
     call: typing.Callable
     env: list[str] = []
     secrets: list[str] = []
-    result: typing.Optional[typing.Union[Type[BaseModel], dict]] = None
+    result: typing.Optional[ResultType] = None
+    errors: list[ResultType] = []
 
     def llm_schema(self):
         properties: dict[str, typing.Any] = {}
@@ -92,15 +95,21 @@ class EbbotComponent(BaseModel):
         }
 
     def result_schema(self) -> typing.Optional[dict[str, typing.Any]]:
-        """
-        Returns None or the JSON schema of the result BaseModel.
-        """
         if not self.result:
             return None
-        if isinstance(self.result, BaseModel):
+        if isinstance(self.result, type) and issubclass(self.result, BaseModel):
             return self.result.model_json_schema()
         if isinstance(self.result, dict):
             return self.result
+
+    def error_schema(self) -> list[dict[str, typing.Any]]:
+        error_schemas = []
+        for error in self.errors:
+            if isinstance(error, type) and issubclass(error, BaseModel):
+                error_schemas.append(error.model_json_schema())
+            elif isinstance(error, dict):
+                error_schemas.append(error)
+        return error_schemas
 
     @field_validator("call", mode="after")
     @classmethod
@@ -197,7 +206,8 @@ def component(
 
 def workflow_action(
     description: str,
-    result: typing.Union[Type[BaseModel], dict[str, typing.Any]],
+    result: ResultType,
+    errors: list[ResultType] = [],
     env: list[str] = [],
     secrets: list[str] = [],
     arguments: LLMArguments = {},
@@ -212,6 +222,7 @@ def workflow_action(
             env=env,
             call=func,
             result=result,
+            errors=errors,
         )
 
     return decorator

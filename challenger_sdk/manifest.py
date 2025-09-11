@@ -71,4 +71,5 @@ def _action_schema_from_llm_schema(comp: EbbotComponent):
     return ActionSchema(
         call=CallSchema(type="function", function=schema["function"]),
         result=comp.result_schema() or {},
+        errors=comp.error_schema(),
     )

@@ -6,9 +6,14 @@ class Result(BaseModel):
     result: str
 
 
+class HelloError(BaseModel):
+    message: str
+
+
 @workflow_action(
     description="Say hello.",
     result=Result,
+    errors=[HelloError, {"type": "string"}],
     arguments={
         "name": {
             "required": True,
