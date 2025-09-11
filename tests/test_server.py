@@ -110,10 +110,26 @@ def test_manifest_data():
         call["description"] == "The user wants to tell you about their favorite food."
     )
     assert call["parameters"]["type"] == "object"
-    print(call["parameters"])
 
     assert call["parameters"]["properties"]["dish"]["type"] == "string"
     assert call["parameters"]["required"] == ["dish"]
+
+
+def test_manifest_result_data():
+    response = client.get(
+        "/manifest",
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    component = get_component(data["actions"], "say_hello")
+    assert component is not None
+    result = component["schema"]["result"]
+    assert result["properties"]["result"]["type"] == "string"
+    component = get_component(data["actions"], "say_hello_without_pydantic")
+    assert component is not None
+    result = component["schema"]["result"]
+    assert result["properties"]["result"]["type"] == "string"
 
 
 def test_manifest_exclude_ebbot():
@@ -122,7 +138,6 @@ def test_manifest_exclude_ebbot():
     )
     assert response.status_code == 200
     data = response.json()
-    print([action["name"] for action in data["actions"]])
     # Update user requires ebbot arguments and should not be included.
     assert get_component(data["actions"], "retrieve_user") == None
 

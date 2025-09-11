@@ -182,7 +182,8 @@ def start_server(path, title="Challenger sdk server"):
             extra_args["env"] = FunctionEnv(tool.env, tool.secrets)
 
         logger.info(f"Calling tool {tool.name}")
-        result = component.call(**extra_args, **tool.ebbot_data, **tool.llm_arguments)
-        return ToolCallResult(**result)
+        raw = component.call(**extra_args, **tool.ebbot_data, **tool.llm_arguments)
+        data = raw.model_dump() if isinstance(raw, BaseModel) else raw
+        return ToolCallResult(**data)
 
     return app

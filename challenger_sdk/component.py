@@ -2,8 +2,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pydantic import BaseModel, field_validator
 import typing
-from typing import NotRequired
+from typing import NotRequired, Type
 import inspect
+
+import pydantic
 
 from challenger_sdk.ebbot import Bot, Chat, Company, Message, User
 
@@ -60,6 +62,7 @@ class EbbotComponent(BaseModel):
     call: typing.Callable
     env: list[str] = []
     secrets: list[str] = []
+    result: typing.Optional[typing.Union[Type[BaseModel], dict]] = None
 
     def llm_schema(self):
         properties: dict[str, typing.Any] = {}
@@ -87,6 +90,17 @@ class EbbotComponent(BaseModel):
                 "parameters": parameters,
             },
         }
+
+    def result_schema(self) -> typing.Optional[dict[str, typing.Any]]:
+        """
+        Returns None or the JSON schema of the result BaseModel.
+        """
+        if not self.result:
+            return None
+        if isinstance(self.result, BaseModel):
+            return self.result.model_json_schema()
+        if isinstance(self.result, dict):
+            return self.result
 
     @field_validator("call", mode="after")
     @classmethod
@@ -151,16 +165,14 @@ class ToolResult(typing.TypedDict):
     actions: NotRequired[Actions]
 
 
-class ActionResult(typing.TypedDict):
-    result: typing.Any
-
-
 @dataclass
 class CompanyEnv:
     info: dict[str, str]
     secrets: dict[str, str]
 
+
 FunctionEnv = CompanyEnv
+
 
 def component(
     description: str,
@@ -185,11 +197,12 @@ def component(
 
 def workflow_action(
     description: str,
+    result: typing.Union[Type[BaseModel], dict[str, typing.Any]],
     env: list[str] = [],
     secrets: list[str] = [],
     arguments: LLMArguments = {},
-) -> typing.Callable[[typing.Callable[..., ActionResult]], EbbotComponent]:
-    def decorator(func: typing.Callable[..., ActionResult]) -> EbbotComponent:
+) -> typing.Callable[[typing.Callable[..., typing.Any]], EbbotComponent]:
+    def decorator(func: typing.Callable[..., typing.Any]) -> EbbotComponent:
         return EbbotComponent(
             name=func.__name__,
             description=description,
@@ -198,6 +211,7 @@ def workflow_action(
             secrets=secrets,
             env=env,
             call=func,
+            result=result,
         )
 
     return decorator

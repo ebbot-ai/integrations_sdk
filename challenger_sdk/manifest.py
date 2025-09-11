@@ -69,5 +69,6 @@ def actions_from_components(components: list[EbbotComponent]) -> list[ActionDefi
 def _action_schema_from_llm_schema(comp: EbbotComponent):
     schema = comp.llm_schema()
     return ActionSchema(
-        call=CallSchema(type="function", function=schema["function"]), result={}
+        call=CallSchema(type="function", function=schema["function"]),
+        result=comp.result_schema() or {},
     )
