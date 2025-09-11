@@ -97,6 +97,8 @@ def test_manifest_data():
     )
     assert response.status_code == 200
     data = response.json()
+    assert data["connection"] is None
+    assert data["subscription"] is None
     component = data["actions"][0]
     assert component["name"] == "store_favorite_food"
     assert (
