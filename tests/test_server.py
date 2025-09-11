@@ -160,5 +160,17 @@ def test_manifest_exclude_ebbot():
     assert get_component(data["actions"], "retrieve_user") == None
 
 
+def test_manifest_component_result_null():
+    response = client.get(
+        "/manifest",
+    )
+    assert response.status_code == 200
+    data = response.json()
+    # Update user requires ebbot arguments and should not be included.
+    component = get_component(data["actions"], "store_favorite_food")
+    assert component != None
+    assert component["schema"]["result"] == None
+
+
 def get_component(data: list[dict], name: str) -> dict | None:
     return next((component for component in data if component["name"] == name), None)

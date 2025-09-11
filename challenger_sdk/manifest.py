@@ -19,7 +19,7 @@ class CallSchema(TypedDict):
 
 class ActionSchema(TypedDict, total=False):
     call: CallSchema
-    result: JSONSchema
+    result: Optional[JSONSchema]
     errors: List[ActionErrorSchema]
 
 
@@ -70,6 +70,6 @@ def _action_schema_from_llm_schema(comp: EbbotComponent):
     schema = comp.llm_schema()
     return ActionSchema(
         call=CallSchema(type="function", function=schema["function"]),
-        result=comp.result_schema() or {},
+        result=comp.result_schema(),
         errors=comp.error_schema(),
     )
