@@ -1,4 +1,4 @@
-from typing import TypedDict, Literal, List, Dict, Any
+from typing import Optional, TypedDict, Literal, List, Dict, Any, NotRequired
 
 from challenger_sdk.component import EbbotComponent
 
@@ -40,16 +40,16 @@ class TriggerDefinition(TypedDict):
 class Manifest(TypedDict):
     triggers: list[TriggerDefinition]
     actions: list[ActionDefinition]
-    connection: JSONSchema
-    subscription: JSONSchema
+    connection: Optional[JSONSchema]
+    subscription: Optional[JSONSchema]
 
 
 def create_manifest(components: list[EbbotComponent]) -> Manifest:
     return Manifest(
         triggers=[],
         actions=actions_from_components(components),
-        connection={},
-        subscription={},
+        connection=None,
+        subscription=None,
     )
 
 
