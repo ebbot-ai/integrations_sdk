@@ -1,4 +1,17 @@
-from typing import Optional, TypedDict, Literal, List, Dict, Any, NotRequired
+from typing import (
+    Annotated,
+    Optional,
+    Type,
+    TypedDict,
+    Literal,
+    List,
+    Dict,
+    Any,
+    NotRequired,
+)
+
+from pydantic import BaseModel
+from pydantic.json_schema import model_json_schema
 
 from challenger_sdk.component import EbbotComponent
 
@@ -44,13 +57,33 @@ class Manifest(TypedDict):
     subscription: Optional[JSONSchema]
 
 
-def create_manifest(components: list[EbbotComponent]) -> Manifest:
+def create_manifest(
+    components: list[EbbotComponent],
+    optionsType: Optional[Type[BaseModel]] = None,
+    secretsType: Optional[Type[BaseModel]] = None,
+) -> Manifest:
+
     return Manifest(
         triggers=[],
         actions=actions_from_components(components),
-        connection=None,
+        connection=connection_schema(optionsType, secretsType),
         subscription=None,
     )
+
+
+def connection_schema(
+    optionsType: Optional[Type[BaseModel]] = None,
+    secretsType: Optional[Type[BaseModel]] = None,
+):
+    schema = {"type": "object", "properties": {}, "required": []}
+    if optionsType:
+        schema["properties"]["options"] = optionsType.model_json_schema()
+        schema["required"].append("options")
+    if secretsType:
+        schema["properties"]["secrets"] = secretsType.model_json_schema()
+        schema["required"].append("secrets")
+
+    return schema
 
 
 def actions_from_components(components: list[EbbotComponent]) -> list[ActionDefinition]:
