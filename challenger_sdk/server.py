@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import importlib
 import inspect
 import logging
@@ -14,6 +15,7 @@ from challenger_sdk.component import (
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ValidationInfo, field_validator
 
+from challenger_sdk.connection import OptionsType, connection_endpoint
 from challenger_sdk.ebbot import Bot, Chat, Company, Message, User
 from challenger_sdk.manifest import create_manifest
 
@@ -186,4 +188,17 @@ def start_server(path, title="Challenger sdk server"):
         data = raw.model_dump() if isinstance(raw, BaseModel) else raw
         return ToolCallResult(**data)
 
+    return app
+
+
+def start_workflow_server(
+    path: str,
+    storage_server_url: str,
+    storage_server_key: str,
+    options: typing.Optional[typing.Type[BaseModel]] = None,
+    secrets: typing.Optional[typing.Type[BaseModel]] = None,
+    title="Challenger SDK Workflow server",
+):
+    app = start_server(path, title)
+    connection_endpoint(app, storage_server_url, storage_server_key, options, secrets)
     return app
