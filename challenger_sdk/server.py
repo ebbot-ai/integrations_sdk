@@ -2,6 +2,7 @@ import importlib
 import pkgutil
 from types import ModuleType
 import typing
+from challenger_sdk.actions import action_endpoints
 from challenger_sdk.component import (
     EbbotComponent,
 )
@@ -72,6 +73,7 @@ def start_workflow_server(
     app = FastAPI(title=title)
     tool_endpoints(app, fns)
     connection_endpoint(app, storage_server_url, storage_server_key, options, secrets)
+    action_endpoints(app, storage_server_url, storage_server_key, list(fns.values()))
 
     @app.get("/manifest")
     def get_manifest():

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from challenger_sdk.component import ToolResult, workflow_action
+from challenger_sdk.component import FunctionEnv, ToolResult, workflow_action
 
 
 class Result(BaseModel):
@@ -39,3 +39,32 @@ def say_hello(name: str) -> Result:
 )
 def say_hello_without_pydantic(name: str) -> dict:
     return Result(result=f"Hello {name}").model_dump()
+
+
+class SecretEnvironmentPollution(BaseModel):
+    secret: str
+    notSecret: str
+
+
+@workflow_action(
+    description="Say hello with secrets and env",
+    result=SecretEnvironmentPollution,
+    secrets=["secret"],
+    env=["notSecret"],
+    arguments={
+        "password": {
+            "required": True,
+            "type": "string",
+            "description": "The secret password is required to reveal all our secrets.",
+        }
+    },
+)
+def say_hello_with_secret_and_env(
+    password: str, env: FunctionEnv
+) -> SecretEnvironmentPollution:
+    if password == "currywurst":
+        return SecretEnvironmentPollution(
+            secret=env.secrets["secret"], notSecret=env.info["notSecret"]
+        )
+    else:
+        return SecretEnvironmentPollution(secret="Notreally", notSecret="Notreally")

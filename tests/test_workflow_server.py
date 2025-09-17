@@ -23,6 +23,7 @@ app = start_workflow_server(
     Secrets,
 )
 client = TestClient(app)
+json_body = {"options": {"notSecret": "asdf"}, "secrets": {"secret": "asdfasdf"}}
 
 
 def test_workflow_server_validation():
@@ -40,7 +41,7 @@ def test_workflow_server_validation():
 
 @responses.activate
 def test_workflow_server_connection():
-    json_body = {"options": {"notSecret": "asdf"}, "secrets": {"secret": "asdfasdf"}}
+
     responses.post(
         url="http://localhost:9000/connections",
         status=201,
@@ -48,7 +49,8 @@ def test_workflow_server_connection():
             responses.matchers.json_params_matcher(json_body),
             responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
         ],
-        json={**json_body,
+        json={
+            **json_body,
             "id": "someid",
             "wfServerId": "ugh",
             "createdAt": "asdf",
@@ -58,3 +60,43 @@ def test_workflow_server_connection():
 
     response = client.post("/connections", json=json_body)
     assert response.status_code == 201
+
+
+@responses.activate
+def test_action_endpoint():
+    responses.get(
+        url="http://localhost:9000/connections/someid",
+        status=200,
+        match=[
+            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
+        ],
+        json={
+            **json_body,
+            "id": "someid",
+            "wfServerId": "ugh",
+            "createdAt": "asdf",
+            "updatedAt": "asdf",
+        },
+    )
+
+    result = client.post(
+        "connections/someid/call/say_hello_with_secret_and_env",
+        json={"password": "currywurst"},
+    )
+    assert result.status_code == 200
+    data = result.json()
+    assert data["secret"] == "asdfasdf"
+    assert data["notSecret"] == "asdf"
+
+
+@responses.activate
+def test_action_endpoint_missing_connection():
+    responses.get(
+        url="http://localhost:9000/connections/someid",
+        status=404,
+    )
+    result = client.post(
+        "connections/someid/call/say_hello_with_secret_and_env",
+        json={"password": "currywurst"},
+    )
+    assert result.status_code == 404
