@@ -51,6 +51,5 @@ def action_endpoints(
     app: FastAPI, server_url: str, auth_key: str, fns: list[EbbotComponent]
 ):
     for fn in fns:
-        print(fn.name)
         if len(fn.ebbot_arguments) == 0:
             action_endpoint(app, server_url, auth_key, fn)
