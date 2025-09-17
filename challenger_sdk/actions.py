@@ -1,7 +1,6 @@
 from inspect import signature
-from typing import Annotated, Any
-from fastapi import Body, Depends, FastAPI, HTTPException, Request
-from pydantic import create_model
+from typing import Any
+from fastapi import Body, Depends, FastAPI, HTTPException
 
 from challenger_sdk.component import EbbotComponent, FunctionEnv
 import jsonschema
