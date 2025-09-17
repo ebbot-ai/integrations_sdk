@@ -80,6 +80,7 @@ class EbbotComponent(BaseModel):
 
         parameters: dict[str, typing.Any] = {
             "type": "object",
+            "additionalProperties": False,
             "properties": properties,
         }
         if required:
