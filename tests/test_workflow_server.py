@@ -1,3 +1,4 @@
+from uuid import uuid4
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 import responses
@@ -92,11 +93,105 @@ def test_action_endpoint():
 @responses.activate
 def test_action_endpoint_missing_connection():
     responses.get(
-        url="http://localhost:9000/connections/someid",
+        url="http://localhost:9000/connections/a897cef1-f953-44c3-a054-6290503c54a5",
         status=404,
     )
     result = client.post(
-        "connections/someid/call/say_hello_with_secret_and_env",
+        "connections/a897cef1-f953-44c3-a054-6290503c54a5/call/say_hello_with_secret_and_env",
         json={"password": "currywurst"},
     )
     assert result.status_code == 404
+
+
+@responses.activate
+def test_save_subscription():
+    responses.post(
+        url="http://localhost:9000/connections/a897cef1-f953-44c3-a054-6290503c54a5/subscriptions",
+        status=201,
+        match=[
+            responses.matchers.json_params_matcher(
+                {
+                    "name": "hook_trigger",
+                    "callback": {
+                        "type": "http",
+                        "method": "post",
+                        "url": "http://v8-engine.com/called",
+                    },
+                    "options": None,
+                    "secrets": None,
+                }
+            ),
+            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
+        ],
+        json={
+            "id": str(uuid4()),
+            "name": "hook_trigger",
+            "connectionId": "a897cef1-f953-44c3-a054-6290503c54a5",
+            "callback": {
+                "type": "http",
+                "method": "post",
+                "url": "http://v8-engine.com/called",
+            },
+            "options": {},
+        },
+    )
+
+    result = client.post(
+        "connections/a897cef1-f953-44c3-a054-6290503c54a5/subscriptions",
+        json={
+            "triggerName": "hook_trigger",
+            "callback": {
+                "type": "http",
+                "method": "post",
+                "url": "http://v8-engine.com/called",
+            },
+        },
+    )
+    assert result.status_code == 201
+
+
+def test_save_subscription_invalid_trigger():
+    result = client.post(
+        "connections/a897cef1-f953-44c3-a054-6290503c54a5/subscriptions",
+        json={
+            "triggerName": "no_trigger",
+            "callback": {
+                "type": "http",
+                "method": "post",
+                "url": "http://v8-engine.com/called",
+            },
+        },
+    )
+    assert result.status_code == 422
+
+
+@responses.activate
+def test_trigger_subscription():
+    body = {"messageId": "myid", "message": "This is my message"}
+    responses.get(
+        url="http://localhost:9000/subscriptions/0008b509-eaba-419a-9012-376797517de5",
+        json={
+            "id": "0008b509-eaba-419a-9012-376797517de5",
+            "connectionId": "a897cef1-f953-44c3-a054-6290503c54a5",
+            "name": "hook_trigger",
+            "callback": {
+                "type": "http",
+                "method": "post",
+                "url": "http://v8-engine.com/called",
+            },
+        },
+        status=200,
+    )
+
+    res = responses.post(
+        url="http://v8-engine.com/called",
+        status=200,
+        match=[
+            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
+        ],
+    )
+    trigger = client.post(
+        "/hook-trigger/0008b509-eaba-419a-9012-376797517de5", json=body
+    )
+    assert trigger.status_code == 200
+    assert res.call_count == 1

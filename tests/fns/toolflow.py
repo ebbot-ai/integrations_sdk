@@ -1,5 +1,7 @@
+from fastapi import FastAPI
 from pydantic import BaseModel
-from challenger_sdk.component import FunctionEnv, ToolResult, workflow_action
+from challenger_sdk.component import FunctionEnv, workflow_action
+from challenger_sdk.triggers import workflow_trigger
 
 
 class Result(BaseModel):
@@ -68,3 +70,16 @@ def say_hello_with_secret_and_env(
         )
     else:
         return SecretEnvironmentPollution(secret="Notreally", notSecret="Notreally")
+
+
+class HookData(BaseModel):
+    messageId: str
+    message: str
+
+
+@workflow_trigger(description="Message received", result=HookData)
+def hook_trigger(dispatch, app: FastAPI):
+
+    @app.post("/hook-trigger/{subscriptionId}")
+    def hook_trigger(subscriptionId: str, data: HookData):
+        dispatch(subscriptionId, data)

@@ -3,6 +3,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import requests
 
+from challenger_sdk.storage_api import request_headers
+
 Vars = Optional[dict[str, Any]]
 OptionsType = Optional[BaseModel]
 
@@ -42,8 +44,8 @@ def store_connection(
 ):
     return _response_handler(
         requests.post(
-            f"{server_url}/connections",
-            headers=_request_headers(auth_key),
+            f"{server_url}/connectixoons",
+            headers=request_headers(auth_key),
             json={
                 "options": options.model_dump() if options else None,
                 "secrets": secrets.model_dump() if secrets else None,
@@ -56,7 +58,7 @@ def get_connection(server_url: str, auth_key: str, con_id: str):
     return _response_handler(
         requests.get(
             f"{server_url}/connections/{con_id}",
-            headers=_request_headers(auth_key),
+            headers=request_headers(auth_key),
         )
     )
 
@@ -67,7 +69,3 @@ def _response_handler(result: requests.Response):
     if result.status_code == 404:
         raise HTTPException(status_code=result.status_code, detail="not found")
     raise Exception(f"Error code: {result.status_code}")
-
-
-def _request_headers(auth_key: str) -> dict:
-    return {"Authorization": f"Bearer {auth_key}"}
