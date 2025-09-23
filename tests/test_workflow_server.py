@@ -2,6 +2,7 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 import responses
+import json
 
 from challenger_sdk.server import start_workflow_server
 
@@ -195,3 +196,57 @@ def test_trigger_subscription():
     )
     assert trigger.status_code == 200
     assert res.call_count == 1
+
+
+@responses.activate
+def test_trigger_subscription_env():
+    body = {"messageId": "myid", "message": "This is my message"}
+    responses.get(
+        url="http://localhost:9000/subscriptions/0008b509-eaba-419a-9012-376797517de5",
+        match=[
+            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
+        ],
+        json={
+            "id": "0008b509-eaba-419a-9012-376797517de5",
+            "connectionId": "a897cef1-f953-44c3-a054-6290503c54a5",
+            "name": "hook_trigger",
+            "callback": {
+                "type": "http",
+                "method": "post",
+                "url": "http://v8-engine.com/called",
+            },
+        },
+        status=200,
+    )
+    responses.get(
+        url="http://localhost:9000/connections/a897cef1-f953-44c3-a054-6290503c54a5",
+        status=200,
+        match=[
+            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
+        ],
+        json={
+            **json_body,
+            "id": "someid",
+            "wfServerId": "ugh",
+            "createdAt": "asdf",
+            "updatedAt": "asdf",
+        },
+    )
+
+    res = responses.post(
+        url="http://v8-engine.com/called",
+        status=200,
+        match=[
+            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
+        ],
+    )
+    trigger = client.post(
+        "/hook-trigger-env-secret/0008b509-eaba-419a-9012-376797517de5", json=body
+    )
+
+    assert trigger.status_code == 200
+    assert res.call_count == 1
+    assert res.calls[0].request.body != None
+    parsed = json.loads(res.calls[0].request.body)
+    assert parsed["payload"]["option"] == "asdf"
+    assert parsed["payload"]["secret"] == "asdfasdf"

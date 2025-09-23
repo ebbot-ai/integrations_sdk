@@ -5,7 +5,7 @@ from fastapi import Body, Depends, FastAPI, HTTPException
 from challenger_sdk.component import EbbotComponent, FunctionEnv
 import jsonschema
 
-from challenger_sdk.connection import get_connection
+from challenger_sdk.connection import function_env_from_connection, get_connection
 
 
 def action_endpoint(app: FastAPI, server_url: str, auth_key: str, fn: EbbotComponent):
@@ -31,20 +31,8 @@ def action_endpoint(app: FastAPI, server_url: str, auth_key: str, fn: EbbotCompo
         extra_args = {}
 
         if "env" in sig.parameters:
-            extra_args["env"] = FunctionEnv(
-                _pick_env_vars(fn.env, con.options if con.options else {}),
-                _pick_env_vars(fn.secrets, con.secrets if con.secrets else {}),
-            )
+            extra_args["env"] = function_env_from_connection(fn.env, fn.secrets, con)
         return fn.call(**payload, **extra_args)
-
-
-def _pick_env_vars(vars: list[str], env: dict[str, Any]) -> dict[str, str]:
-    picked: dict[str, str] = {}
-    for var in vars:
-        if var not in env:
-            raise HTTPException(status_code=500, detail=f"Missing env var: {var}")
-        picked[var] = env[var]
-    return picked
 
 
 def action_endpoints(

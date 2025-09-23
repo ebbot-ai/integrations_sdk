@@ -6,10 +6,16 @@ from pydantic import BaseModel, Field, field_validator
 from requests import Response, get, post, request
 from uuid import uuid4
 
-from challenger_sdk.connection import StoredConnection
+from challenger_sdk.component import FunctionEnv
+from challenger_sdk.connection import (
+    StoredConnection,
+    function_env_from_connection,
+    get_connection,
+)
 from challenger_sdk.storage_api import request_headers
 
 SchemaType = Union[Type[BaseModel], dict]
+GetEnvFn = Callable[[str], FunctionEnv]
 
 
 class Trigger(BaseModel):
@@ -19,12 +25,14 @@ class Trigger(BaseModel):
     call: Callable
     env: list[str] = []
     secrets: list[str] = []
+    triggerOptionsType: Optional[Type[BaseModel]] = None
+    triggerSecretsType: Optional[Type[BaseModel]] = None
 
     @field_validator("call", mode="after")
     @classmethod
     def check_callable_arguments(cls, value: Callable, info):
         sig = signature(value)
-        allowed = set(["env", "app", "dispatch"])
+        allowed = set(["getEnv", "app", "dispatch"])
 
         for param in sig.parameters.values():
             if param.name not in allowed:
@@ -55,17 +63,21 @@ class StoredSubscription(SaveSubscription):
 def workflow_trigger(
     description: str,
     result: SchemaType,
-    env: list[str] = [],
-    secrets: list[str] = [],
+    connectionEnv: list[str] = [],
+    connectionSecrets: list[str] = [],
+    triggerOptions: Optional[Type[BaseModel]] = None,
+    triggerSecrets: Optional[Type[BaseModel]] = None,
 ):
     def decorator(func: Callable) -> Trigger:
         return Trigger(
             name=func.__name__,
             description=description,
             result=result,
-            env=env,
-            secrets=secrets,
+            env=connectionEnv,
+            secrets=connectionSecrets,
             call=func,
+            triggerOptionsType=triggerOptions,
+            triggerSecretsType=triggerSecrets,
         )
 
     return decorator
@@ -107,6 +119,8 @@ class TriggerData:
 
 
 def activate_trigger(server_url: str, auth_key: str, app: FastAPI, trigger: Trigger):
+    sig = signature(trigger.call)
+
     def dispatch(subscription_id: str, data):
         subscription = get_subscription(server_url, auth_key, subscription_id)
         trigger_data = TriggerData(
@@ -123,7 +137,19 @@ def activate_trigger(server_url: str, auth_key: str, app: FastAPI, trigger: Trig
             headers=request_headers(auth_key),
         )
 
-    extra_args = {"app": app}
+    extra_args: dict[str, Any] = {}
+    if "app" in sig.parameters:
+        extra_args["app"] = app
+    if "getEnv" in sig.parameters:
+
+        def get_env(subscription_id: str):
+            subscription = get_subscription(server_url, auth_key, subscription_id)
+            connection = get_connection(server_url, auth_key, subscription.connectionId)
+            return function_env_from_connection(
+                trigger.env, trigger.secrets, connection
+            )
+
+        extra_args["getEnv"] = get_env
     trigger.call(dispatch, **extra_args)
 
 

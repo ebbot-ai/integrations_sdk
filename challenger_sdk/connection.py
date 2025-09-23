@@ -3,6 +3,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import requests
 
+from challenger_sdk.component import FunctionEnv
 from challenger_sdk.storage_api import request_headers
 
 Vars = Optional[dict[str, Any]]
@@ -44,7 +45,7 @@ def store_connection(
 ):
     return _response_handler(
         requests.post(
-            f"{server_url}/connectixoons",
+            f"{server_url}/connections",
             headers=request_headers(auth_key),
             json={
                 "options": options.model_dump() if options else None,
@@ -52,6 +53,24 @@ def store_connection(
             },
         )
     )
+
+
+def function_env_from_connection(
+    env: list[str], secrets: list[str], con: StoredConnection
+):
+    return FunctionEnv(
+        _pick_env_vars(env, con.options if con.options else {}),
+        _pick_env_vars(secrets, con.secrets if con.secrets else {}),
+    )
+
+
+def _pick_env_vars(vars: list[str], env: dict[str, Any]) -> dict[str, str]:
+    picked: dict[str, str] = {}
+    for var in vars:
+        if var not in env:
+            raise HTTPException(status_code=500, detail=f"Missing env var: {var}")
+        picked[var] = env[var]
+    return picked
 
 
 def get_connection(server_url: str, auth_key: str, con_id: str):

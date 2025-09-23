@@ -1,7 +1,8 @@
+from typing import Callable
 from fastapi import FastAPI
 from pydantic import BaseModel
 from challenger_sdk.component import FunctionEnv, workflow_action
-from challenger_sdk.triggers import workflow_trigger
+from challenger_sdk.triggers import GetEnvFn, workflow_trigger
 
 
 class Result(BaseModel):
@@ -83,3 +84,45 @@ def hook_trigger(dispatch, app: FastAPI):
     @app.post("/hook-trigger/{subscriptionId}")
     def hook_trigger(subscriptionId: str, data: HookData):
         dispatch(subscriptionId, data)
+
+
+@workflow_trigger(
+    description="env, secrets from connection",
+    result=HookData,
+    connectionEnv=["notSecret"],
+    connectionSecrets=["secret"],
+)
+def hook_trigger_env_secret(dispatch, app: FastAPI, getEnv: GetEnvFn):
+    @app.post("/hook-trigger-env-secret/{subscriptionId}")
+    def hook_trigger_secret_env(subscriptionId: str):
+        env = getEnv(subscriptionId)
+        dispatch(
+            subscriptionId,
+            {"option": env.info["notSecret"], "secret": env.secrets["secret"]},
+        )
+
+
+class TriggerEnv(BaseModel):
+    option: str
+
+
+class SecretEnv(BaseModel):
+    secret: str
+
+
+@workflow_trigger(
+    description="env, secrets from connection",
+    result=HookData,
+    triggerOptions=TriggerEnv,
+    triggerSecrets=SecretEnv,
+)
+def hook_trigger_own_env_secret(
+    dispatch, app: FastAPI, getEnv: Callable[[], FunctionEnv]
+):
+    @app.post("/hook-trigger-own-env/{subscriptionId}")
+    def hook_trigger_secret_env(subscriptionId: str):
+        env = getEnv()
+        dispatch(
+            subscriptionId,
+            {"option": env.info["option"], "secret": env.secrets["secret"]},
+        )
