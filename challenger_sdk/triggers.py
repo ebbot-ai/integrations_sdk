@@ -8,7 +8,6 @@ from uuid import uuid4
 
 from challenger_sdk.component import FunctionEnv
 from challenger_sdk.connection import (
-    StoredConnection,
     function_env_from_connection,
     get_connection,
 )
@@ -144,10 +143,18 @@ def activate_trigger(server_url: str, auth_key: str, app: FastAPI, trigger: Trig
 
         def get_env(subscription_id: str):
             subscription = get_subscription(server_url, auth_key, subscription_id)
+
             connection = get_connection(server_url, auth_key, subscription.connectionId)
-            return function_env_from_connection(
+            function_env = function_env_from_connection(
                 trigger.env, trigger.secrets, connection
             )
+            if trigger.triggerOptionsType:
+                options = trigger.triggerOptionsType(**subscription.options or {})
+                function_env.info.update(options.model_dump())
+            if trigger.triggerSecretsType:
+                secrets = trigger.triggerSecretsType(**subscription.secrets or {})
+                function_env.secrets.update(secrets.model_dump())
+            return function_env
 
         extra_args["getEnv"] = get_env
     trigger.call(dispatch, **extra_args)

@@ -13,8 +13,8 @@ OptionsType = Optional[BaseModel]
 class StoredConnection(BaseModel):
     id: str
     wfServerId: str
-    secrets: Optional[Vars]
-    options: Optional[Vars]
+    secrets: Vars
+    options: Vars
     createdAt: str
     updatedAt: str
 

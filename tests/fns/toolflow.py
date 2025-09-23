@@ -116,12 +116,10 @@ class SecretEnv(BaseModel):
     triggerOptions=TriggerEnv,
     triggerSecrets=SecretEnv,
 )
-def hook_trigger_own_env_secret(
-    dispatch, app: FastAPI, getEnv: Callable[[], FunctionEnv]
-):
+def hook_trigger_own_env_secret(dispatch, app: FastAPI, getEnv: GetEnvFn):
     @app.post("/hook-trigger-own-env/{subscriptionId}")
     def hook_trigger_secret_env(subscriptionId: str):
-        env = getEnv()
+        env = getEnv(subscriptionId)
         dispatch(
             subscriptionId,
             {"option": env.info["option"], "secret": env.secrets["secret"]},
