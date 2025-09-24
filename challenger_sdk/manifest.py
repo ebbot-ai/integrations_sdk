@@ -73,7 +73,7 @@ def create_manifest(
 
 
 def subscription_schema(triggers: list[Trigger]):
-    if len(triggers) > 0:
+    if len(triggers) == 0:
         return None
 
     class Subscription(BaseModel):

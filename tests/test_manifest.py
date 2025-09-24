@@ -23,7 +23,9 @@ def test_manifest_data():
     )
     assert response.status_code == 200
     data = response.json()
+    assert data["subscription"] != None
     component = data["actions"][0]
+
     assert component["name"] == "store_favorite_food"
     assert (
         component["description"]
