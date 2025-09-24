@@ -19,12 +19,16 @@ class StoredConnection(BaseModel):
     updatedAt: str
 
 
+class EmptyOptions(BaseModel):
+    pass
+
+
 def connection_endpoint(
     app: FastAPI,
     server_url: str,
     auth_key: str,
-    optionsType: Optional[Type[BaseModel]] = None,
-    secretsType: Optional[Type[BaseModel]] = None,
+    optionsType: Optional[Type[BaseModel]] = EmptyOptions,
+    secretsType: Optional[Type[BaseModel]] = EmptyOptions,
 ):
     class Connection(BaseModel):
         secrets: Annotated[BaseModel, secretsType]
