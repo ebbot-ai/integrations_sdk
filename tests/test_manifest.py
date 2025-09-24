@@ -122,3 +122,12 @@ def test_manifest_subscription():
     assert response.status_code == 200
     data = response.json()
     assert data["subscription"]["required"] == ["triggerName", "callback"]
+
+
+def test_manifest_without_options_secrets():
+    boring_app = start_workflow_server("fns", "http://server.com", "key")
+    client = TestClient(boring_app)
+    response = client.get(
+        "/manifest",
+    )
+    assert response.status_code == 200
