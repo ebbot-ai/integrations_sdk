@@ -94,6 +94,8 @@ def start_workflow_server(
 
     @app.get("/manifest")
     def get_manifest():
-        return create_manifest(list(fns.values()), options, secrets)
+        return create_manifest(
+            list(fns.values()), list(triggers.values()), options, secrets
+        )
 
     return app

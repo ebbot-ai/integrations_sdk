@@ -23,7 +23,6 @@ def test_manifest_data():
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["subscription"] is None
     component = data["actions"][0]
     assert component["name"] == "store_favorite_food"
     assert (
@@ -40,6 +39,7 @@ def test_manifest_data():
 
     assert call["parameters"]["properties"]["dish"]["type"] == "string"
     assert call["parameters"]["required"] == ["dish"]
+    assert len(data["triggers"]) == 3
 
 
 def test_manifest_result_schema():
@@ -56,7 +56,6 @@ def test_manifest_result_schema():
     component = get_component(data["actions"], "say_hello_without_pydantic")
     assert component is not None
     result = component["schema"]["result"]
-    print(result)
     assert result["properties"]["result"]["type"] == "string"
 
 
@@ -112,3 +111,12 @@ def test_manifest_connection():
         data["connection"]["properties"]["secrets"]["properties"]["secret"]["type"]
         == "string"
     )
+
+
+def test_manifest_subscription():
+    response = client.get(
+        "/manifest",
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["subscription"]["required"] == ["triggerName", "callback"]

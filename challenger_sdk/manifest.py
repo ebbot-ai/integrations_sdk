@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from pydantic.json_schema import model_json_schema
 
 from challenger_sdk.component import EbbotComponent
+from challenger_sdk.triggers import Callback, Trigger
 
 JSONSchema = Dict[str, Any]
 ActionErrorSchema = Dict[str, Any]
@@ -59,16 +60,27 @@ class Manifest(TypedDict):
 
 def create_manifest(
     components: list[EbbotComponent],
+    triggers: list[Trigger],
     optionsType: Optional[Type[BaseModel]] = None,
     secretsType: Optional[Type[BaseModel]] = None,
 ) -> Manifest:
-
     return Manifest(
-        triggers=[],
+        triggers=trigger_definitions(triggers),
         actions=actions_from_components(components),
         connection=connection_schema(optionsType, secretsType),
-        subscription=None,
+        subscription=subscription_schema(triggers),
     )
+
+
+def subscription_schema(triggers: list[Trigger]):
+    if len(triggers) > 0:
+        return None
+
+    class Subscription(BaseModel):
+        triggerName: str
+        callback: Callback
+
+    return Subscription.model_json_schema()
 
 
 def connection_schema(
@@ -86,6 +98,18 @@ def connection_schema(
     return schema
 
 
+def trigger_definitions(triggers: list[Trigger]):
+    return [
+        TriggerDefinition(
+            type="trigger",
+            name=trigger.name,
+            description=trigger.description,
+            schema=_trigger_schema_from_trigger(trigger),
+        )
+        for trigger in triggers
+    ]
+
+
 def actions_from_components(components: list[EbbotComponent]) -> list[ActionDefinition]:
     return [
         ActionDefinition(
@@ -97,6 +121,24 @@ def actions_from_components(components: list[EbbotComponent]) -> list[ActionDefi
         for comp in components
         if len(comp.ebbot_arguments) == 0
     ]
+
+
+def _trigger_schema_from_trigger(trigger: Trigger):
+    payloadSchema = (
+        trigger.result.model_json_schema()
+        if isinstance(trigger.result, type) and issubclass(trigger.result, BaseModel)
+        else trigger.result
+    )
+
+    class TriggerSchema(BaseModel):
+        id: str
+        name: str
+        connectionId: str
+        subscriptionId: str
+
+    schema = TriggerSchema.model_json_schema()
+    schema["properties"]["payload"] = payloadSchema
+    return schema
 
 
 def _action_schema_from_llm_schema(comp: EbbotComponent):
