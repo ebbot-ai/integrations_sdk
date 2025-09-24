@@ -10,7 +10,7 @@ from challenger_sdk.component import (
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from challenger_sdk.connection import connection_endpoint
+from challenger_sdk.connection import EmptyOptions, connection_endpoint
 from challenger_sdk.manifest import create_manifest
 from challenger_sdk.tools import tool_endpoints
 from challenger_sdk.triggers import Trigger, register_triggers, subscription_endpoint
@@ -74,8 +74,8 @@ def start_workflow_server(
     path: str,
     storage_server_url: str,
     storage_server_key: str,
-    options: typing.Optional[typing.Type[BaseModel]] = None,
-    secrets: typing.Optional[typing.Type[BaseModel]] = None,
+    options: typing.Optional[typing.Type[BaseModel]] = EmptyOptions,
+    secrets: typing.Optional[typing.Type[BaseModel]] = EmptyOptions,
     title="Challenger SDK Workflow server",
 ):
     fns = _walk_package(path, EbbotComponent)

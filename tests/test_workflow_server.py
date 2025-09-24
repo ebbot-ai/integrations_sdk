@@ -65,6 +65,36 @@ def test_workflow_server_connection():
 
 
 @responses.activate
+def test_workflow_server_connection_no_options():
+    empty_body = {"options": {}, "secrets": {}}
+    testApp = start_workflow_server(
+        "fns",
+        "http://localhost:9000",
+        key,
+    )
+    client = TestClient(testApp)
+
+    responses.post(
+        url="http://localhost:9000/connections",
+        status=201,
+        match=[
+            responses.matchers.json_params_matcher(empty_body),
+            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
+        ],
+        json={
+            **empty_body,
+            "id": "someid",
+            "wfServerId": "ugh",
+            "createdAt": "asdf",
+            "updatedAt": "asdf",
+        },
+    )
+
+    response = client.post("/connections", json=empty_body)
+    assert response.status_code == 201
+
+
+@responses.activate
 def test_action_endpoint():
     responses.get(
         url="http://localhost:9000/connections/someid",
