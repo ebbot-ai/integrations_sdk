@@ -23,7 +23,7 @@ class EmptyOptions(BaseModel):
     pass
 
 
-def connection_endpoint(
+def connection_endpoints(
     app: FastAPI,
     server_url: str,
     auth_key: str,
@@ -42,6 +42,14 @@ def connection_endpoint(
             connection.options,
             connection.secrets,
         )
+    @app.get("/connections/{connectionId}")
+    def get_connection_endpoint(connectionId: str):
+        return get_connection(
+            server_url,
+            auth_key,
+            connectionId
+        )
+
 
 
 def store_connection(

@@ -59,9 +59,26 @@ def test_workflow_server_connection():
             "updatedAt": "asdf",
         },
     )
+    responses.get(
+        url="http://localhost:9000/connections/someid",
+        status=201,
+        match=[
+            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
+        ],
+        json={
+            **json_body,
+            "id": "someid",
+            "wfServerId": "ugh",
+            "createdAt": "asdf",
+            "updatedAt": "asdf",
+        },
+    )
 
     response = client.post("/connections", json=json_body)
     assert response.status_code == 201
+    data = response.json()
+    get_response = client.get(f"/connections/{data["id"]}");
+    assert get_response.status_code == 200
 
 
 @responses.activate

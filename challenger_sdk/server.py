@@ -10,7 +10,7 @@ from challenger_sdk.component import (
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from challenger_sdk.connection import EmptyOptions, connection_endpoint
+from challenger_sdk.connection import EmptyOptions, connection_endpoints
 from challenger_sdk.manifest import create_manifest
 from challenger_sdk.tools import tool_endpoints
 from challenger_sdk.triggers import Trigger, register_triggers, subscription_endpoint
@@ -82,7 +82,7 @@ def start_workflow_server(
     triggers = _walk_package(path, Trigger)
     app = FastAPI(title=title)
     tool_endpoints(app, fns)
-    connection_endpoint(app, storage_server_url, storage_server_key, options, secrets)
+    connection_endpoints(app, storage_server_url, storage_server_key, options, secrets)
     action_endpoints(app, storage_server_url, storage_server_key, list(fns.values()))
     if len(triggers) > 0:
         register_triggers(
