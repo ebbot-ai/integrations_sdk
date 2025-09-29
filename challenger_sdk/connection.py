@@ -35,7 +35,7 @@ def connection_endpoints(
         options: Annotated[BaseModel, optionsType]
 
     @app.post("/connections", status_code=201)
-    def save_connection(connection: Connection):
+    def save_connection(connection: Connection) -> StoredConnection:
         return store_connection(
             server_url,
             auth_key,
