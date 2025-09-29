@@ -43,7 +43,7 @@ def connection_endpoints(
             connection.secrets,
         )
     @app.get("/connections/{connectionId}")
-    def get_connection_endpoint(connectionId: str):
+    def get_connection_endpoint(connectionId: str) -> StoredConnection:
         return get_connection(
             server_url,
             auth_key,
