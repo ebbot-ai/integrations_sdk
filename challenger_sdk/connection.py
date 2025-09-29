@@ -34,16 +34,24 @@ def connection_endpoints(
         secrets: Annotated[BaseModel, secretsType]
         options: Annotated[BaseModel, optionsType]
 
-    @app.post("/connections", status_code=201)
-    def save_connection(connection: Connection) -> StoredConnection:
+    class ResultConnection(Connection):
+        id: str
+        wfServerId: str
+        createdAt: str
+        updatedAt: str
+
+
+
+    @app.post("/connections", status_code=201, response_model=ResultConnection)
+    def save_connection(connection: Connection):
         return store_connection(
             server_url,
             auth_key,
             connection.options,
             connection.secrets,
         )
-    @app.get("/connections/{connectionId}")
-    def get_connection_endpoint(connectionId: str) -> StoredConnection:
+    @app.get("/connections/{connectionId}", response_model=ResultConnection)
+    def get_connection_endpoint(connectionId: str):
         return get_connection(
             server_url,
             auth_key,
