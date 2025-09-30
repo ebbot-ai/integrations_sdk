@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from challenger_sdk.connection import EmptyOptions, connection_endpoints
+from challenger_sdk.dev_server import DevServerWorkflowStorage
 from challenger_sdk.manifest import create_manifest
 from challenger_sdk.storage_server import StorageServerWorkflowStorage
 from challenger_sdk.tools import tool_endpoints
@@ -80,7 +81,10 @@ def start_workflow_server(
     title="Challenger SDK Workflow server",
     dev_mode: bool = False,
 ):
-    storage = StorageServerWorkflowStorage(storage_server_url, storage_server_key)
+    if dev_mode:
+        storage = DevServerWorkflowStorage()
+    else:
+        storage = StorageServerWorkflowStorage(storage_server_url, storage_server_key)
     fns = _walk_package(path, EbbotComponent)
     triggers = _walk_package(path, Trigger)
     app = FastAPI(title=title)
