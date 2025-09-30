@@ -68,7 +68,7 @@ FunctionEnv = CompanyEnv
 @dataclass
 class FieldInfo:
     label: str
-    options: list[tuple[str, str]]
+    options: Optional[list[tuple[str, str]]] = None
     translations: Optional[dict[str, FieldInfo]] = None
 
 
