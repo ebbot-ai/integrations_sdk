@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pydantic import BaseModel, field_validator
 import typing
-from typing import NotRequired, Type
+from typing import Callable, NotRequired, Optional, Protocol, Type
 import inspect
 
 import pydantic
@@ -56,6 +56,25 @@ LLMArguments = dict[str, LLMArgument]
 ResultType = typing.Union[Type[BaseModel], dict]
 
 
+@dataclass
+class CompanyEnv:
+    info: dict[str, str]
+    secrets: dict[str, str]
+
+
+FunctionEnv = CompanyEnv
+
+
+class FieldInfo:
+    label: str
+    options: list[tuple[str, str]]
+    translations: Optional[dict[str, FieldInfo]]
+
+
+InfoReturnType = list[dict[str, FieldInfo]]
+InfoCallback = Callable[[FunctionEnv], InfoReturnType]
+
+
 class EbbotComponent(BaseModel):
     name: str
     description: str
@@ -66,6 +85,7 @@ class EbbotComponent(BaseModel):
     secrets: list[str] = []
     result: typing.Optional[ResultType] = None
     errors: list[ResultType] = []
+    info: typing.Optional[InfoCallback] = None
 
     def llm_schema(self):
         properties: dict[str, typing.Any] = {}
@@ -175,15 +195,6 @@ class ToolResult(typing.TypedDict):
     actions: NotRequired[Actions]
 
 
-@dataclass
-class CompanyEnv:
-    info: dict[str, str]
-    secrets: dict[str, str]
-
-
-FunctionEnv = CompanyEnv
-
-
 def component(
     description: str,
     ebbot_arguments: list[EbbotArgument] = [],
@@ -212,6 +223,7 @@ def workflow_action(
     env: list[str] = [],
     secrets: list[str] = [],
     arguments: LLMArguments = {},
+    info: typing.Optional[typing.Callable] = None,
 ) -> typing.Callable[[typing.Callable[..., typing.Any]], EbbotComponent]:
     def decorator(func: typing.Callable[..., typing.Any]) -> EbbotComponent:
         return EbbotComponent(
@@ -224,6 +236,7 @@ def workflow_action(
             call=func,
             result=result,
             errors=errors,
+            info=info,
         )
 
     return decorator
