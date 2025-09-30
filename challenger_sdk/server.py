@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from challenger_sdk.connection import EmptyOptions, connection_endpoints
 from challenger_sdk.manifest import create_manifest
+from challenger_sdk.storage_server import StorageServerWorkflowStorage
 from challenger_sdk.tools import tool_endpoints
 from challenger_sdk.triggers import Trigger, register_triggers, subscription_endpoint
 
@@ -77,20 +78,18 @@ def start_workflow_server(
     options: typing.Optional[typing.Type[BaseModel]] = EmptyOptions,
     secrets: typing.Optional[typing.Type[BaseModel]] = EmptyOptions,
     title="Challenger SDK Workflow server",
+    dev_mode: bool = False,
 ):
+    storage = StorageServerWorkflowStorage(storage_server_url, storage_server_key)
     fns = _walk_package(path, EbbotComponent)
     triggers = _walk_package(path, Trigger)
     app = FastAPI(title=title)
     tool_endpoints(app, fns)
-    connection_endpoints(app, storage_server_url, storage_server_key, options, secrets)
-    action_endpoints(app, storage_server_url, storage_server_key, list(fns.values()))
+    connection_endpoints(app, storage, options, secrets)
+    action_endpoints(app, storage, list(fns.values()))
     if len(triggers) > 0:
-        register_triggers(
-            app, storage_server_url, storage_server_key, list(triggers.values())
-        )
-        subscription_endpoint(
-            app, storage_server_url, storage_server_key, list(triggers.values())
-        )
+        register_triggers(app, storage, storage_server_key, list(triggers.values()))
+        subscription_endpoint(app, storage, list(triggers.values()))
 
     @app.get("/manifest")
     def get_manifest():

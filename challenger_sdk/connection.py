@@ -1,22 +1,11 @@
 from typing import Annotated, Any, Optional, Type
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import requests
-
 from challenger_sdk.component import FunctionEnv
-from challenger_sdk.storage_api import request_headers
+from challenger_sdk.workflow import Connection, WorkflowStorage
 
-Vars = Optional[dict[str, Any]]
+
 OptionsType = Optional[BaseModel]
-
-
-class StoredConnection(BaseModel):
-    id: str
-    wfServerId: str
-    secrets: Vars
-    options: Vars
-    createdAt: str
-    updatedAt: str
 
 
 class EmptyOptions(BaseModel):
@@ -25,59 +14,33 @@ class EmptyOptions(BaseModel):
 
 def connection_endpoints(
     app: FastAPI,
-    server_url: str,
-    auth_key: str,
+    storage: WorkflowStorage,
     optionsType: Optional[Type[BaseModel]] = EmptyOptions,
     secretsType: Optional[Type[BaseModel]] = EmptyOptions,
 ):
-    class Connection(BaseModel):
+    class ServerConnection(BaseModel):
         secrets: Annotated[BaseModel, secretsType]
         options: Annotated[BaseModel, optionsType]
 
-    class ResultConnection(Connection):
+    class ResultConnection(ServerConnection):
         id: str
         wfServerId: str
         createdAt: str
         updatedAt: str
 
-
-
     @app.post("/connections", status_code=201, response_model=ResultConnection)
-    def save_connection(connection: Connection):
-        return store_connection(
-            server_url,
-            auth_key,
-            connection.options,
-            connection.secrets,
+    def save_connection(connection: ServerConnection):
+        return storage.save_connection(
+            connection.options.model_dump(),
+            connection.secrets.model_dump(),
         )
+
     @app.get("/connections/{connectionId}", response_model=ResultConnection)
     def get_connection_endpoint(connectionId: str):
-        return get_connection(
-            server_url,
-            auth_key,
-            connectionId
-        )
+        return storage.get_connection(connectionId)
 
 
-
-def store_connection(
-    server_url: str, auth_key: str, options: OptionsType, secrets: OptionsType
-):
-    return _response_handler(
-        requests.post(
-            f"{server_url}/connections",
-            headers=request_headers(auth_key),
-            json={
-                "options": options.model_dump() if options else None,
-                "secrets": secrets.model_dump() if secrets else None,
-            },
-        )
-    )
-
-
-def function_env_from_connection(
-    env: list[str], secrets: list[str], con: StoredConnection
-):
+def function_env_from_connection(env: list[str], secrets: list[str], con: Connection):
     return FunctionEnv(
         _pick_env_vars(env, con.options if con.options else {}),
         _pick_env_vars(secrets, con.secrets if con.secrets else {}),
@@ -91,20 +54,3 @@ def _pick_env_vars(vars: list[str], env: dict[str, Any]) -> dict[str, str]:
             raise HTTPException(status_code=500, detail=f"Missing env var: {var}")
         picked[var] = env[var]
     return picked
-
-
-def get_connection(server_url: str, auth_key: str, con_id: str):
-    return _response_handler(
-        requests.get(
-            f"{server_url}/connections/{con_id}",
-            headers=request_headers(auth_key),
-        )
-    )
-
-
-def _response_handler(result: requests.Response):
-    if result.status_code < 300:
-        return StoredConnection(**result.json())
-    if result.status_code == 404:
-        raise HTTPException(status_code=result.status_code, detail="not found")
-    raise Exception(f"Error code: {result.status_code}")

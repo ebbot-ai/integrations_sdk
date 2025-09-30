@@ -1,17 +1,17 @@
 from dataclasses import dataclass, asdict
 from inspect import signature
-from typing import Callable, Literal, Optional, Union, Type, Any
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field, field_validator
-from requests import Response, get, post, request
+from typing import Callable, Optional, Union, Type, Any
+from fastapi import FastAPI
+from pydantic import BaseModel, field_validator
+from requests import request
 from uuid import uuid4
 
 from challenger_sdk.component import FunctionEnv
 from challenger_sdk.connection import (
     function_env_from_connection,
-    get_connection,
 )
-from challenger_sdk.storage_api import request_headers
+from challenger_sdk.storage_server import request_headers
+from challenger_sdk.workflow import Callback, NewSubscription, WorkflowStorage
 
 SchemaType = Union[Type[BaseModel], dict]
 GetEnvFn = Callable[[str], FunctionEnv]
@@ -41,24 +41,6 @@ class Trigger(BaseModel):
         return value
 
 
-class Callback(BaseModel):
-    type: Literal["http"]
-    method: Literal["post"]
-    url: str
-
-
-class SaveSubscription(BaseModel):
-    callback: Callback
-    name: str
-    options: Optional[dict[str, Any]] = None
-    secrets: Optional[dict[str, Any]] = None
-
-
-class StoredSubscription(SaveSubscription):
-    id: str
-    connectionId: str
-
-
 def workflow_trigger(
     description: str,
     result: SchemaType,
@@ -83,7 +65,7 @@ def workflow_trigger(
 
 
 def subscription_endpoint(
-    app: FastAPI, server_url: str, auth_key: str, triggers: list[Trigger]
+    app: FastAPI, storage: WorkflowStorage, triggers: list[Trigger]
 ):
     class Subscription(BaseModel):
         triggerName: str
@@ -98,11 +80,9 @@ def subscription_endpoint(
 
     @app.post("/connections/{connection_id}/subscriptions", status_code=201)
     def create_subscription(connection_id: str, subscription: Subscription):
-        return store_subscription(
-            server_url,
-            auth_key,
+        return storage.save_subscription(
             connection_id,
-            SaveSubscription(
+            NewSubscription(
                 name=subscription.triggerName, callback=subscription.callback
             ),
         )
@@ -117,11 +97,13 @@ class TriggerData:
     payload: dict
 
 
-def activate_trigger(server_url: str, auth_key: str, app: FastAPI, trigger: Trigger):
+def activate_trigger(
+    storage: WorkflowStorage, auth_key: str, app: FastAPI, trigger: Trigger
+):
     sig = signature(trigger.call)
 
     def dispatch(subscription_id: str, data):
-        subscription = get_subscription(server_url, auth_key, subscription_id)
+        subscription = storage.get_subscription(subscription_id)
         trigger_data = TriggerData(
             str(uuid4()),
             trigger.name,
@@ -142,9 +124,9 @@ def activate_trigger(server_url: str, auth_key: str, app: FastAPI, trigger: Trig
     if "getEnv" in sig.parameters:
 
         def get_env(subscription_id: str):
-            subscription = get_subscription(server_url, auth_key, subscription_id)
+            subscription = storage.get_subscription(subscription_id)
 
-            connection = get_connection(server_url, auth_key, subscription.connectionId)
+            connection = storage.get_connection(subscription.connectionId)
             function_env = function_env_from_connection(
                 trigger.env, trigger.secrets, connection
             )
@@ -161,38 +143,7 @@ def activate_trigger(server_url: str, auth_key: str, app: FastAPI, trigger: Trig
 
 
 def register_triggers(
-    app: FastAPI, server_url: str, auth_key: str, triggers: list[Trigger]
+    app: FastAPI, storage: WorkflowStorage, auth_key: str, triggers: list[Trigger]
 ):
     for trigger in triggers:
-        activate_trigger(server_url, auth_key, app, trigger)
-
-
-def get_subscription(
-    server_url: str, auth_key: str, subscription_id: str
-) -> StoredSubscription:
-    return _response_handler(
-        get(
-            f"{server_url}/subscriptions/{subscription_id}",
-            headers=request_headers(auth_key),
-        )
-    )
-
-
-def store_subscription(
-    server_url: str, auth_key: str, connection_id: str, subscription: SaveSubscription
-):
-    return _response_handler(
-        post(
-            f"{server_url}/connections/{connection_id}/subscriptions",
-            headers=request_headers(auth_key),
-            json=subscription.model_dump(),
-        )
-    )
-
-
-def _response_handler(result: Response):
-    if result.status_code < 300:
-        return StoredSubscription(**result.json())
-    if result.status_code == 404:
-        raise HTTPException(status_code=result.status_code, detail="not found")
-    raise Exception(f"Error code: {result.status_code}")
+        activate_trigger(storage, auth_key, app, trigger)

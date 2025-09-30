@@ -1,14 +1,14 @@
 from inspect import signature
-from typing import Any
 from fastapi import Body, Depends, FastAPI, HTTPException
 
-from challenger_sdk.component import EbbotComponent, FunctionEnv
+from challenger_sdk.component import EbbotComponent
 import jsonschema
 
-from challenger_sdk.connection import function_env_from_connection, get_connection
+from challenger_sdk.connection import function_env_from_connection
+from challenger_sdk.workflow import WorkflowStorage
 
 
-def action_endpoint(app: FastAPI, server_url: str, auth_key: str, fn: EbbotComponent):
+def action_endpoint(app: FastAPI, storage: WorkflowStorage, fn: EbbotComponent):
     schema = fn.llm_schema()
     json_schema = schema["function"]["parameters"]
 
@@ -26,7 +26,7 @@ def action_endpoint(app: FastAPI, server_url: str, auth_key: str, fn: EbbotCompo
         },
     )
     def action(connection_id: str, payload: dict = Depends(validate_against_schema)):
-        con = get_connection(server_url, auth_key, connection_id)
+        con = storage.get_connection(connection_id)
         sig = signature(fn.call)
         extra_args = {}
 
@@ -35,9 +35,7 @@ def action_endpoint(app: FastAPI, server_url: str, auth_key: str, fn: EbbotCompo
         return fn.call(**payload, **extra_args)
 
 
-def action_endpoints(
-    app: FastAPI, server_url: str, auth_key: str, fns: list[EbbotComponent]
-):
+def action_endpoints(app: FastAPI, storage: WorkflowStorage, fns: list[EbbotComponent]):
     for fn in fns:
         if len(fn.ebbot_arguments) == 0:
-            action_endpoint(app, server_url, auth_key, fn)
+            action_endpoint(app, storage, fn)
