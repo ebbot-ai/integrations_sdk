@@ -21,7 +21,6 @@ class StorageServerWorkflowStorage(WorkflowStorage):
 
     @override
     def save_connection(self, options: Vars = None, secrets: Vars = None) -> Connection:
-        breakpoint()
         return _response_handler(
             requests.post(
                 f"{self.server_url}/connections",
