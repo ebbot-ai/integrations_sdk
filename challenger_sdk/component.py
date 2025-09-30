@@ -65,13 +65,14 @@ class CompanyEnv:
 FunctionEnv = CompanyEnv
 
 
+@dataclass
 class FieldInfo:
     label: str
     options: list[tuple[str, str]]
-    translations: Optional[dict[str, FieldInfo]]
+    translations: Optional[dict[str, FieldInfo]] = None
 
 
-InfoReturnType = list[dict[str, FieldInfo]]
+InfoReturnType = dict[str, FieldInfo]
 InfoCallback = Callable[[FunctionEnv], InfoReturnType]
 
 
@@ -223,7 +224,7 @@ def workflow_action(
     env: list[str] = [],
     secrets: list[str] = [],
     arguments: LLMArguments = {},
-    info: typing.Optional[typing.Callable] = None,
+    info: typing.Optional[InfoCallback] = None,
 ) -> typing.Callable[[typing.Callable[..., typing.Any]], EbbotComponent]:
     def decorator(func: typing.Callable[..., typing.Any]) -> EbbotComponent:
         return EbbotComponent(

@@ -1,7 +1,11 @@
 from typing import Callable
 from fastapi import FastAPI
 from pydantic import BaseModel
-from challenger_sdk.component import FunctionEnv, workflow_action
+from challenger_sdk.component import (
+    FunctionEnv,
+    workflow_action,
+    FieldInfo,
+)
 from challenger_sdk.triggers import GetEnvFn, workflow_trigger
 
 
@@ -32,6 +36,8 @@ def say_hello(name: str) -> Result:
 @workflow_action(
     description="Say hello, the good old fashined way",
     result=Result.model_json_schema(),
+    secrets=["secret"],
+    env=["notSecret"],
     arguments={
         "name": {
             "required": True,
@@ -42,6 +48,36 @@ def say_hello(name: str) -> Result:
 )
 def say_hello_without_pydantic(name: str) -> dict:
     return Result(result=f"Hello {name}").model_dump()
+
+
+def info(env: FunctionEnv):
+    return {
+        "word": FieldInfo(
+            label="What a label it is",
+            options=[
+                (env.info["notSecret"], "Very not secret"),
+                (env.secrets["secret"], "Very secret"),
+            ],
+        )
+    }
+
+
+@workflow_action(
+    description="Say one of the selected words",
+    result=Result.model_json_schema(),
+    secrets=["secret"],
+    env=["notSecret"],
+    arguments={
+        "word": {
+            "required": True,
+            "type": "string",
+            "description": "Ask the user about their name. Let the user verify it is correct before proceeding.",
+        }
+    },
+    info=info,
+)
+def say_a_word(word: str) -> dict:
+    return Result(result=f"This is the word: {word}").model_dump()
 
 
 class SecretEnvironmentPollution(BaseModel):

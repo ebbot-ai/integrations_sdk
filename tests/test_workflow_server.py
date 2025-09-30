@@ -77,7 +77,7 @@ def test_workflow_server_connection():
     response = client.post("/connections", json=json_body)
     assert response.status_code == 201
     data = response.json()
-    get_response = client.get(f"/connections/{data["id"]}");
+    get_response = client.get(f"/connections/{data["id"]}")
     assert get_response.status_code == 200
 
 
@@ -136,6 +136,33 @@ def test_action_endpoint():
     data = result.json()
     assert data["secret"] == "asdfasdf"
     assert data["notSecret"] == "asdf"
+
+
+@responses.activate
+def test_action_info_endpoint():
+    responses.get(
+        url="http://localhost:9000/connections/someid",
+        status=200,
+        match=[
+            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
+        ],
+        json={
+            **json_body,
+            "id": "someid",
+            "wfServerId": "ugh",
+            "createdAt": "asdf",
+            "updatedAt": "asdf",
+        },
+    )
+
+    result = client.get(
+        "connections/someid/form/say_a_word",
+    )
+    assert result.status_code == 200
+    data = result.json()
+    assert data["word"]["label"] == "What a label it is"
+    assert data["word"]["options"][0] == ["asdf", "Very not secret"]
+    assert data["word"]["options"][1] == ["asdfasdf", "Very secret"]
 
 
 @responses.activate
