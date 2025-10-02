@@ -1,4 +1,4 @@
-from typing import Type, TypeVar, Protocol
+from typing import Optional, Type, TypeVar, Protocol
 import importlib
 import pkgutil
 from types import ModuleType
@@ -80,6 +80,7 @@ def start_workflow_server(
     secrets: typing.Optional[typing.Type[BaseModel]] = EmptyOptions,
     title="Challenger SDK Workflow server",
     dev_mode: bool = False,
+    install_instructions: Optional[str] = None,
 ):
     if dev_mode:
         storage = DevServerWorkflowStorage()
@@ -98,7 +99,11 @@ def start_workflow_server(
     @app.get("/manifest")
     def get_manifest():
         return create_manifest(
-            list(fns.values()), list(triggers.values()), options, secrets
+            list(fns.values()),
+            list(triggers.values()),
+            options,
+            secrets,
+            install_instructions,
         )
 
     return app

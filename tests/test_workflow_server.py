@@ -16,13 +16,7 @@ class Secrets(BaseModel):
     secret: str
 
 
-app = start_workflow_server(
-    "fns",
-    "http://localhost:9000",
-    mocks.key,
-    Options,
-    Secrets,
-)
+app = start_workflow_server("fns", "http://localhost:9000", mocks.key, Options, Secrets)
 client = TestClient(app)
 json_body = {"options": {"notSecret": "asdf"}, "secrets": {"secret": "asdfasdf"}}
 

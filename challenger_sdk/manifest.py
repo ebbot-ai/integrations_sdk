@@ -49,6 +49,7 @@ class TriggerDefinition(TypedDict):
     name: str
     description: str
     schema: JSONSchema
+    installInstructions: str
 
 
 class Manifest(TypedDict):
@@ -56,6 +57,7 @@ class Manifest(TypedDict):
     actions: list[ActionDefinition]
     connection: Optional[JSONSchema]
     subscription: Optional[JSONSchema]
+    installInstructions: Optional[str]
 
 
 def create_manifest(
@@ -63,12 +65,14 @@ def create_manifest(
     triggers: list[Trigger],
     optionsType: Optional[Type[BaseModel]] = None,
     secretsType: Optional[Type[BaseModel]] = None,
+    installInstructions: Optional[str] = None,
 ) -> Manifest:
     return Manifest(
         triggers=trigger_definitions(triggers),
         actions=actions_from_components(components),
         connection=connection_schema(optionsType, secretsType),
         subscription=subscription_schema(triggers),
+        installInstructions=installInstructions,
     )
 
 
@@ -107,6 +111,7 @@ def trigger_definitions(triggers: list[Trigger]):
             name=trigger.name,
             description=trigger.description,
             schema=_trigger_schema_from_trigger(trigger),
+            installInstructions="",
         )
         for trigger in triggers
     ]
