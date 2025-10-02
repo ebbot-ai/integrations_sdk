@@ -99,7 +99,6 @@ def subscription_endpoint(
 
     @app.post("/connections/{connection_id}/subscriptions", status_code=201)
     def create_subscription(connection_id: str, subscription: Subscription):
-
         saved_subscription = storage.save_subscription(
             connection_id,
             NewSubscription(
