@@ -134,6 +134,22 @@ class DevServerWorkflowStorage(WorkflowStorage):
         )
         return Subscription(**data)
 
+    @override
+    def remove_subscription(self, subscriptionId: str):
+        cursor = init_dev_db()
+        cursor.execute(
+            """
+            DELETE FROM subscriptions
+            WHERE id = ?
+            """,
+            (subscriptionId,),
+        )
+        if cursor.rowcount == 0:
+            cursor.close()
+            raise HTTPException(404, detail="not found")
+        cursor.connection.commit()
+        cursor.close()
+
 
 def connect():
     con = sqlite3.connect("dev.db")

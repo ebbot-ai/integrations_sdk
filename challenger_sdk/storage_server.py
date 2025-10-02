@@ -66,6 +66,14 @@ class StorageServerWorkflowStorage(WorkflowStorage):
             Subscription,
         )
 
+    @override
+    def remove_subscription(self, subscriptionId: str):
+        result = requests.get(
+            f"{self.server_url}/subscriptions/{subscriptionId}",
+            headers=request_headers(self.auth_key),
+        )
+        raise Exception(f"Error code: {result.status_code}")
+
 
 def request_headers(auth_key: str) -> dict:
     return {"Authorization": f"Bearer {auth_key}"}
