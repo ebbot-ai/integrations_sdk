@@ -44,6 +44,7 @@ class Trigger(BaseModel):
     secrets: list[str] = []
     triggerOptionsType: Optional[Type[BaseModel]] = None
     triggerSecretsType: Optional[Type[BaseModel]] = None
+    installInstructions: Optional[str] = None
     events: TriggerEvents = TriggerEvents()
 
     @field_validator("call", mode="after")
@@ -67,6 +68,7 @@ def workflow_trigger(
     connectionSecrets: list[str] = [],
     triggerOptions: Optional[Type[BaseModel]] = None,
     triggerSecrets: Optional[Type[BaseModel]] = None,
+    installInstructions: Optional[str] = None,
 ):
     def decorator(func: Callable) -> Trigger:
         return Trigger(
@@ -78,6 +80,7 @@ def workflow_trigger(
             call=func,
             triggerOptionsType=triggerOptions,
             triggerSecretsType=triggerSecrets,
+            installInstructions=installInstructions,
         )
 
     return decorator
