@@ -67,12 +67,32 @@ class StorageServerWorkflowStorage(WorkflowStorage):
         )
 
     @override
-    def remove_subscription(self, subscriptionId: str):
-        result = requests.get(
-            f"{self.server_url}/subscriptions/{subscriptionId}",
+    def remove_subscription(self, connectionId: str, subscriptionId: str):
+        result = requests.delete(
+            f"{self.server_url}/connections/{connectionId}/subscriptions/{subscriptionId}",
             headers=request_headers(self.auth_key),
         )
-        raise Exception(f"Error code: {result.status_code}")
+        if result.status_code == 404:
+            raise HTTPException(status_code=result.status_code, detail="not found")
+        if result.status_code > 300:
+            raise Exception(f"Error code: {result.status_code}")
+
+    @override
+    def update_subscription(self, subscription: Subscription) -> Subscription:
+        payload: dict = {}
+        if subscription.options is not None:
+            payload["options"] = subscription.options
+        if subscription.secrets is not None:
+            payload["secrets"] = subscription.secrets
+
+        return _response_handler(
+            requests.patch(
+                f"{self.server_url}/connections/{subscription.connectionId}/subscriptions/{subscription.id}",
+                headers=request_headers(self.auth_key),
+                json=payload,
+            ),
+            Subscription,
+        )
 
 
 def request_headers(auth_key: str) -> dict:

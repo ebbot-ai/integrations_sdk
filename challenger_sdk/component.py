@@ -2,10 +2,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pydantic import BaseModel, field_validator
 import typing
-from typing import Callable, NotRequired, Optional, Protocol, Type
+from typing import Callable, NotRequired, Optional, Type
 import inspect
 
-import pydantic
 
 from challenger_sdk.ebbot import Bot, Chat, Company, Message, User
 

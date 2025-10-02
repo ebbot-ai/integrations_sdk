@@ -1,12 +1,14 @@
 from typing import Callable
 from fastapi import FastAPI
 from pydantic import BaseModel
+from requests import post
 from challenger_sdk.component import (
     FunctionEnv,
     workflow_action,
     FieldInfo,
 )
-from challenger_sdk.triggers import GetEnvFn, workflow_trigger
+from challenger_sdk.triggers import GetEnvFn, TriggerEvents, workflow_trigger
+from challenger_sdk.workflow import Subscription
 
 
 class Result(BaseModel):
@@ -160,3 +162,26 @@ def hook_trigger_own_env_secret(dispatch, app: FastAPI, getEnv: GetEnvFn):
             subscriptionId,
             {"option": env.info["option"], "secret": env.secrets["secret"]},
         )
+
+
+@workflow_trigger(
+    description="",
+    result=HookData,
+)
+def on_created(dispatch, app: FastAPI, events: TriggerEvents):
+    def call_me_on_created(subscription: Subscription):
+        subscription.options = {"extra_prop": "Property prop"}
+        return subscription
+
+    events.on_created(call_me_on_created)
+
+
+@workflow_trigger(
+    description="",
+    result=HookData,
+)
+def on_created_fail(dispatch, app: FastAPI, events: TriggerEvents):
+    def call_me_on_created(subscription: Subscription):
+        raise Exception("No, not like that")
+
+    events.on_created(call_me_on_created)

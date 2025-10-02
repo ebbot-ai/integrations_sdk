@@ -11,10 +11,28 @@ from challenger_sdk.connection import (
     function_env_from_connection,
 )
 from challenger_sdk.storage_server import request_headers
-from challenger_sdk.workflow import Callback, NewSubscription, WorkflowStorage
+from challenger_sdk.workflow import (
+    Callback,
+    NewSubscription,
+    Subscription,
+    WorkflowStorage,
+)
 
 SchemaType = Union[Type[BaseModel], dict]
 GetEnvFn = Callable[[str], FunctionEnv]
+
+ListenerCallback = Callable[[Subscription], Subscription]
+
+
+class TriggerEvents(BaseModel):
+    created_listener: Optional[ListenerCallback] = None
+    removed_listener: Optional[ListenerCallback] = None
+
+    def on_created(self, fn):
+        self.created_listener = fn
+
+    def on_removed(self, fn):
+        self.removed_listener = fn
 
 
 class Trigger(BaseModel):
@@ -26,12 +44,13 @@ class Trigger(BaseModel):
     secrets: list[str] = []
     triggerOptionsType: Optional[Type[BaseModel]] = None
     triggerSecretsType: Optional[Type[BaseModel]] = None
+    events: TriggerEvents = TriggerEvents()
 
     @field_validator("call", mode="after")
     @classmethod
     def check_callable_arguments(cls, value: Callable, info):
         sig = signature(value)
-        allowed = set(["getEnv", "app", "dispatch"])
+        allowed = set(["getEnv", "app", "dispatch", "events"])
 
         for param in sig.parameters.values():
             if param.name not in allowed:
@@ -80,12 +99,26 @@ def subscription_endpoint(
 
     @app.post("/connections/{connection_id}/subscriptions", status_code=201)
     def create_subscription(connection_id: str, subscription: Subscription):
-        return storage.save_subscription(
+
+        saved_subscription = storage.save_subscription(
             connection_id,
             NewSubscription(
                 name=subscription.triggerName, callback=subscription.callback
             ),
         )
+        trigger = next(
+            (t for t in triggers if t.name == subscription.triggerName), None
+        )
+        if trigger and trigger.events.created_listener:
+            try:
+                updated_subscription = trigger.events.created_listener(
+                    saved_subscription
+                )
+                return storage.update_subscription(updated_subscription)
+            except Exception as e:
+                storage.remove_subscription(connection_id, saved_subscription.id)
+                raise e
+        return saved_subscription
 
 
 @dataclass
@@ -119,6 +152,8 @@ def activate_trigger(
         )
 
     extra_args: dict[str, Any] = {}
+    if "events" in sig.parameters:
+        extra_args["events"] = trigger.events
     if "app" in sig.parameters:
         extra_args["app"] = app
     if "getEnv" in sig.parameters:

@@ -135,7 +135,7 @@ class DevServerWorkflowStorage(WorkflowStorage):
         return Subscription(**data)
 
     @override
-    def remove_subscription(self, subscriptionId: str):
+    def remove_subscription(self, connectionId: str, subscriptionId: str):
         cursor = init_dev_db()
         cursor.execute(
             """
@@ -149,6 +149,43 @@ class DevServerWorkflowStorage(WorkflowStorage):
             raise HTTPException(404, detail="not found")
         cursor.connection.commit()
         cursor.close()
+
+    @override
+    def update_subscription(self, subscription: Subscription):
+        cursor = init_dev_db()
+        update_data = {}
+        # Only update options / secrets if provided (allow clearing with empty dict)
+        if subscription.options is not None:
+            update_data["options"] = subscription.options
+        if subscription.secrets is not None:
+            update_data["secrets"] = subscription.secrets
+
+        ts = datetime.now().isoformat() + "Z"
+        cursor.execute(
+            """
+            UPDATE subscriptions
+            SET data = ?, updatedAt = ?
+            WHERE id = ?
+            """,
+            (
+                json.dumps(update_data),
+                ts,
+                subscription.id,
+            ),
+        )
+        if cursor.rowcount == 0:
+            cursor.close()
+            raise HTTPException(404, detail="not found")
+        cursor.connection.commit()
+        cursor.close()
+        return Subscription(
+            id=subscription.id,
+            connectionId=subscription.connectionId,
+            name=subscription.name,
+            callback=subscription.callback,
+            options=update_data.get("options"),
+            secrets=update_data.get("secrets"),
+        )
 
 
 def connect():
