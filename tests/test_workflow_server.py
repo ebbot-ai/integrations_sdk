@@ -2,8 +2,9 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 import responses
+from pytest import raises
 import json
-
+import mocks
 from challenger_sdk.server import start_workflow_server
 
 
@@ -15,12 +16,10 @@ class Secrets(BaseModel):
     secret: str
 
 
-key = "hpM9ZHBvrxlly61irrdoGmnYmdPX5K883eyXtp1jc7vmiowV29tqAJuodLr1uBgD"
-
 app = start_workflow_server(
     "fns",
     "http://localhost:9000",
-    key,
+    mocks.key,
     Options,
     Secrets,
 )
@@ -43,37 +42,9 @@ def test_workflow_server_validation():
 
 @responses.activate
 def test_workflow_server_connection():
-
-    responses.post(
-        url="http://localhost:9000/connections",
-        status=201,
-        match=[
-            responses.matchers.json_params_matcher(json_body),
-            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
-        ],
-        json={
-            **json_body,
-            "id": "someid",
-            "wfServerId": "ugh",
-            "createdAt": "asdf",
-            "updatedAt": "asdf",
-        },
-    )
-    responses.get(
-        url="http://localhost:9000/connections/someid",
-        status=201,
-        match=[
-            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
-        ],
-        json={
-            **json_body,
-            "id": "someid",
-            "wfServerId": "ugh",
-            "createdAt": "asdf",
-            "updatedAt": "asdf",
-        },
-    )
-
+    id = mocks.id()
+    mocks.post_connection(id)
+    mocks.get_connection(id)
     response = client.post("/connections", json=json_body)
     assert response.status_code == 201
     data = response.json()
@@ -87,49 +58,21 @@ def test_workflow_server_connection_no_options():
     testApp = start_workflow_server(
         "fns",
         "http://localhost:9000",
-        key,
+        mocks.key,
     )
     client = TestClient(testApp)
-
-    responses.post(
-        url="http://localhost:9000/connections",
-        status=201,
-        match=[
-            responses.matchers.json_params_matcher(empty_body),
-            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
-        ],
-        json={
-            **empty_body,
-            "id": "someid",
-            "wfServerId": "ugh",
-            "createdAt": "asdf",
-            "updatedAt": "asdf",
-        },
-    )
-
+    mocks.post_connection(mocks.id(), empty_body)
     response = client.post("/connections", json=empty_body)
     assert response.status_code == 201
 
 
 @responses.activate
 def test_action_endpoint():
-    responses.get(
-        url="http://localhost:9000/connections/someid",
-        status=200,
-        match=[
-            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
-        ],
-        json={
-            **json_body,
-            "id": "someid",
-            "wfServerId": "ugh",
-            "createdAt": "asdf",
-            "updatedAt": "asdf",
-        },
-    )
+    id = mocks.id()
+    mocks.get_connection(id)
 
     result = client.post(
-        "connections/someid/call/say_hello_with_secret_and_env",
+        f"connections/{id}/call/say_hello_with_secret_and_env",
         json={"password": "currywurst"},
     )
     assert result.status_code == 200
@@ -140,23 +83,10 @@ def test_action_endpoint():
 
 @responses.activate
 def test_action_info_endpoint():
-    responses.get(
-        url="http://localhost:9000/connections/someid",
-        status=200,
-        match=[
-            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
-        ],
-        json={
-            **json_body,
-            "id": "someid",
-            "wfServerId": "ugh",
-            "createdAt": "asdf",
-            "updatedAt": "asdf",
-        },
-    )
-
+    id = mocks.id()
+    mocks.get_connection(id)
     result = client.get(
-        "connections/someid/form/say_a_word",
+        f"connections/{id}/form/say_a_word",
     )
     assert result.status_code == 200
     data = result.json()
@@ -180,39 +110,11 @@ def test_action_endpoint_missing_connection():
 
 @responses.activate
 def test_save_subscription():
-    responses.post(
-        url="http://localhost:9000/connections/a897cef1-f953-44c3-a054-6290503c54a5/subscriptions",
-        status=201,
-        match=[
-            responses.matchers.json_params_matcher(
-                {
-                    "name": "hook_trigger",
-                    "callback": {
-                        "type": "http",
-                        "method": "post",
-                        "url": "http://v8-engine.com/called",
-                    },
-                    "options": None,
-                    "secrets": None,
-                }
-            ),
-            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
-        ],
-        json={
-            "id": str(uuid4()),
-            "name": "hook_trigger",
-            "connectionId": "a897cef1-f953-44c3-a054-6290503c54a5",
-            "callback": {
-                "type": "http",
-                "method": "post",
-                "url": "http://v8-engine.com/called",
-            },
-            "options": {},
-        },
-    )
+    connectionId = mocks.id()
+    mocks.post_subscription(connectionId, mocks.id())
 
     result = client.post(
-        "connections/a897cef1-f953-44c3-a054-6290503c54a5/subscriptions",
+        f"connections/{connectionId}/subscriptions",
         json={
             "triggerName": "hook_trigger",
             "callback": {
@@ -223,6 +125,64 @@ def test_save_subscription():
         },
     )
     assert result.status_code == 201
+
+
+@responses.activate
+def test_save_subscription_trigger_created():
+    connectionId = mocks.id()
+    subId = mocks.id()
+    data = {**mocks.default_subscription_data, "name": "on_created"}
+    mocks.post_subscription(connectionId, subId, data)
+    patch_response = mocks.patch_subscription(connectionId, subId, data)
+    result = client.post(
+        f"connections/{connectionId}/subscriptions",
+        json={
+            "triggerName": "on_created",
+            "callback": {
+                "type": "http",
+                "method": "post",
+                "url": "http://v8-engine.com/called",
+            },
+        },
+    )
+
+    assert result.status_code == 201
+    assert patch_response.call_count == 1
+    assert patch_response.calls[0].request.body != None
+    response_data = json.loads(patch_response.calls[0].request.body)
+    assert response_data["options"]["extra_prop"] == "Property prop"
+
+
+@responses.activate
+def test_save_subscription_trigger_created_rollback():
+    connectionId = mocks.id()
+    subscriptionId = mocks.id()
+    json_data = {
+        "name": "on_created_fail",
+        "callback": {
+            "type": "http",
+            "method": "post",
+            "url": "http://v8-engine.com/called",
+        },
+        "options": {},
+    }
+    mocks.post_subscription(connectionId, subscriptionId, json_data)
+    remove_req = mocks.delete_subscription(connectionId, subscriptionId)
+
+    with raises(Exception):
+        client.post(
+            f"connections/{connectionId}/subscriptions",
+            json={
+                "triggerName": "on_created_fail",
+                "callback": {
+                    "type": "http",
+                    "method": "post",
+                    "url": "http://v8-engine.com/called",
+                },
+            },
+        )
+
+    assert remove_req.call_count == 1
 
 
 def test_save_subscription_invalid_trigger():
@@ -243,31 +203,10 @@ def test_save_subscription_invalid_trigger():
 @responses.activate
 def test_trigger_subscription():
     body = {"messageId": "myid", "message": "This is my message"}
-    responses.get(
-        url="http://localhost:9000/subscriptions/0008b509-eaba-419a-9012-376797517de5",
-        json={
-            "id": "0008b509-eaba-419a-9012-376797517de5",
-            "connectionId": "a897cef1-f953-44c3-a054-6290503c54a5",
-            "name": "hook_trigger",
-            "callback": {
-                "type": "http",
-                "method": "post",
-                "url": "http://v8-engine.com/called",
-            },
-        },
-        status=200,
-    )
-
-    res = responses.post(
-        url="http://v8-engine.com/called",
-        status=200,
-        match=[
-            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
-        ],
-    )
-    trigger = client.post(
-        "/hook-trigger/0008b509-eaba-419a-9012-376797517de5", json=body
-    )
+    subscriptionId = mocks.id()
+    mocks.get_subscription(mocks.id(), subscriptionId)
+    res = mocks.engine_callback()
+    trigger = client.post(f"/hook-trigger/{subscriptionId}", json=body)
     assert trigger.status_code == 200
     assert res.call_count == 1
 
@@ -275,48 +214,12 @@ def test_trigger_subscription():
 @responses.activate
 def test_trigger_subscription_env():
     body = {"messageId": "myid", "message": "This is my message"}
-    responses.get(
-        url="http://localhost:9000/subscriptions/0008b509-eaba-419a-9012-376797517de5",
-        match=[
-            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
-        ],
-        json={
-            "id": "0008b509-eaba-419a-9012-376797517de5",
-            "connectionId": "a897cef1-f953-44c3-a054-6290503c54a5",
-            "name": "hook_trigger",
-            "callback": {
-                "type": "http",
-                "method": "post",
-                "url": "http://v8-engine.com/called",
-            },
-        },
-        status=200,
-    )
-    responses.get(
-        url="http://localhost:9000/connections/a897cef1-f953-44c3-a054-6290503c54a5",
-        status=200,
-        match=[
-            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
-        ],
-        json={
-            **json_body,
-            "id": "someid",
-            "wfServerId": "ugh",
-            "createdAt": "asdf",
-            "updatedAt": "asdf",
-        },
-    )
-
-    res = responses.post(
-        url="http://v8-engine.com/called",
-        status=200,
-        match=[
-            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
-        ],
-    )
-    trigger = client.post(
-        "/hook-trigger-env-secret/0008b509-eaba-419a-9012-376797517de5", json=body
-    )
+    connectionId = mocks.id()
+    subscriptionId = mocks.id()
+    mocks.get_connection(connectionId)
+    mocks.get_subscription(connectionId, subscriptionId)
+    res = mocks.engine_callback()
+    trigger = client.post(f"/hook-trigger-env-secret/{subscriptionId}", json=body)
 
     assert trigger.status_code == 200
     assert res.call_count == 1
@@ -329,50 +232,26 @@ def test_trigger_subscription_env():
 @responses.activate
 def test_trigger_own_subscription_env():
     body = {"messageId": "myid", "message": "This is my message"}
-    responses.get(
-        url="http://localhost:9000/subscriptions/0008b509-eaba-419a-9012-376797517de5",
-        match=[
-            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
-        ],
-        json={
-            "id": "0008b509-eaba-419a-9012-376797517de5",
-            "connectionId": "a897cef1-f953-44c3-a054-6290503c54a5",
-            "name": "hook_trigger",
-            "callback": {
-                "type": "http",
-                "method": "post",
-                "url": "http://v8-engine.com/called",
-            },
+    connectionId = mocks.id()
+    subscriptionId = mocks.id()
+    mocks.get_subscription(
+        connectionId,
+        subscriptionId,
+        {
+            **mocks.default_subscription_data,
             "options": {"option": "test"},
             "secrets": {"secret": "test2"},
         },
-        status=200,
     )
-    responses.get(
-        url="http://localhost:9000/connections/a897cef1-f953-44c3-a054-6290503c54a5",
-        status=200,
-        match=[
-            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
-        ],
-        json={
-            **json_body,
-            "id": "someid",
-            "wfServerId": "ugh",
-            "createdAt": "asdf",
-            "updatedAt": "asdf",
-        },
-    )
-
+    mocks.get_connection(connectionId)
     res = responses.post(
         url="http://v8-engine.com/called",
         status=200,
         match=[
-            responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
+            responses.matchers.header_matcher({"Authorization": f"Bearer {mocks.key}"}),
         ],
     )
-    trigger = client.post(
-        "/hook-trigger-own-env/0008b509-eaba-419a-9012-376797517de5", json=body
-    )
+    trigger = client.post(f"/hook-trigger-own-env/{subscriptionId}", json=body)
 
     assert trigger.status_code == 200
     assert res.call_count == 1

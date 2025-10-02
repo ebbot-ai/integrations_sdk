@@ -41,7 +41,7 @@ def test_manifest_data():
 
     assert call["parameters"]["properties"]["dish"]["type"] == "string"
     assert call["parameters"]["required"] == ["dish"]
-    assert len(data["triggers"]) == 3
+    assert len(data["triggers"]) == 5
 
 
 def test_manifest_result_schema():
