@@ -49,7 +49,7 @@ class TriggerDefinition(TypedDict):
     name: str
     description: str
     schema: JSONSchema
-    installInstructions: str
+    installInstructions: Optional[str]
 
 
 class Manifest(TypedDict):
@@ -111,7 +111,7 @@ def trigger_definitions(triggers: list[Trigger]):
             name=trigger.name,
             description=trigger.description,
             schema=_trigger_schema_from_trigger(trigger),
-            installInstructions="",
+            installInstructions=trigger.installInstructions,
         )
         for trigger in triggers
     ]

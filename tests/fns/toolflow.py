@@ -116,7 +116,14 @@ class HookData(BaseModel):
     message: str
 
 
-@workflow_trigger(description="Message received", result=HookData)
+installInstructions = "Docs on point, README magic"
+
+
+@workflow_trigger(
+    description="Message received",
+    result=HookData,
+    installInstructions=installInstructions,
+)
 def hook_trigger(dispatch, app: FastAPI):
 
     @app.post("/hook-trigger/{subscriptionId}")
@@ -129,6 +136,7 @@ def hook_trigger(dispatch, app: FastAPI):
     result=HookData,
     connectionEnv=["notSecret"],
     connectionSecrets=["secret"],
+    installInstructions=installInstructions,
 )
 def hook_trigger_env_secret(dispatch, app: FastAPI, getEnv: GetEnvFn):
     @app.post("/hook-trigger-env-secret/{subscriptionId}")
@@ -153,6 +161,7 @@ class SecretEnv(BaseModel):
     result=HookData,
     triggerOptions=TriggerEnv,
     triggerSecrets=SecretEnv,
+    installInstructions=installInstructions,
 )
 def hook_trigger_own_env_secret(dispatch, app: FastAPI, getEnv: GetEnvFn):
     @app.post("/hook-trigger-own-env/{subscriptionId}")
@@ -167,6 +176,7 @@ def hook_trigger_own_env_secret(dispatch, app: FastAPI, getEnv: GetEnvFn):
 @workflow_trigger(
     description="",
     result=HookData,
+    installInstructions=installInstructions,
 )
 def on_created(dispatch, app: FastAPI, events: TriggerEvents):
     def call_me_on_created(subscription: Subscription):
@@ -179,6 +189,7 @@ def on_created(dispatch, app: FastAPI, events: TriggerEvents):
 @workflow_trigger(
     description="",
     result=HookData,
+    installInstructions=installInstructions,
 )
 def on_created_fail(dispatch, app: FastAPI, events: TriggerEvents):
     def call_me_on_created(subscription: Subscription):
