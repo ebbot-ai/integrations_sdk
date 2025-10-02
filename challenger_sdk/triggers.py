@@ -1,7 +1,8 @@
 from dataclasses import dataclass, asdict
 from inspect import signature
+import logging
 from typing import Callable, Optional, Union, Type, Any
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, field_validator
 from requests import request
 from uuid import uuid4
@@ -17,6 +18,8 @@ from challenger_sdk.workflow import (
     Subscription,
     WorkflowStorage,
 )
+
+logger = logging.getLogger(__name__)
 
 SchemaType = Union[Type[BaseModel], dict]
 GetEnvFn = Callable[[str], FunctionEnv]
@@ -143,12 +146,20 @@ def activate_trigger(
             subscription_id,
             data.model_dump() if isinstance(data, BaseModel) else data,
         )
-        request(
+
+        response = request(
             subscription.callback.method.capitalize(),
             subscription.callback.url,
             json=asdict(trigger_data),
             headers=request_headers(auth_key),
         )
+        if response.status_code >= 400:
+            logger.error(
+                f"Error firing trigger: {trigger.name} for subscription {subscription.id} (Status code: {response.status_code})"
+            )
+            raise HTTPException(
+                status_code=response.status_code, detail=response.reason
+            )
 
     extra_args: dict[str, Any] = {}
     if "events" in sig.parameters:

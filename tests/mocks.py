@@ -119,10 +119,10 @@ def get_subscription(
     )
 
 
-def engine_callback(url="http://v8-engine.com/called"):
+def engine_callback(url="http://v8-engine.com/called", statusCode=200):
     return responses.post(
         url=url,
-        status=200,
+        status=statusCode,
         match=[
             responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
         ],
