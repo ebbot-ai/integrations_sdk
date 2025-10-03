@@ -90,6 +90,7 @@ def connection_schema(
 ):
     def base():
         return {"type": "object", "properties": {}, "required": []}
+
     schema = base()
     schema["properties"]["options"] = (
         optionsType.model_json_schema() if optionsType else base()
