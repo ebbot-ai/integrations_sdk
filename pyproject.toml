@@ -16,7 +16,8 @@ dependencies = [
     "requests (>=2.32.4,<3.0.0)",
     "typer (>=0.16.0,<0.17.0)",
     "responses (>=0.25.8,<0.26.0)",
-    "jsonschema (>=4.25.1,<5.0.0)"
+    "jsonschema (>=4.25.1,<5.0.0)",
+    "ruff>=0.13.3",
 ]
 
 [build-system]
