@@ -88,7 +88,8 @@ def connection_schema(
     optionsType: Optional[Type[BaseModel]] = None,
     secretsType: Optional[Type[BaseModel]] = None,
 ):
-    base = lambda: {"type": "object", "properties": {}, "required": []}
+    def base():
+        return {"type": "object", "properties": {}, "required": []}
     schema = base()
     schema["properties"]["options"] = (
         optionsType.model_json_schema() if optionsType else base()

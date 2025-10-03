@@ -31,7 +31,7 @@ def test_get_components():
         "description": "The users favorite food.",
         "type": "string",
     }
-    assert get_component(data, "update_user") != None
+    assert get_component(data, "update_user") is not None
 
 
 def test_call_component_ebbot_args():

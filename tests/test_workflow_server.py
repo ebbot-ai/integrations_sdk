@@ -158,7 +158,7 @@ def test_save_subscription_trigger_created():
 
     assert result.status_code == 201
     assert patch_response.call_count == 1
-    assert patch_response.calls[0].request.body != None
+    assert patch_response.calls[0].request.body is not None
     response_data = json.loads(patch_response.calls[0].request.body)
     assert response_data["options"]["extra_prop"] == "Property prop"
 
@@ -233,7 +233,7 @@ def test_trigger_subscription_env():
 
     assert trigger.status_code == 200
     assert res.call_count == 1
-    assert res.calls[0].request.body != None
+    assert res.calls[0].request.body is not None
     parsed = json.loads(res.calls[0].request.body)
     assert parsed["payload"]["option"] == "asdf"
     assert parsed["payload"]["secret"] == "asdfasdf"
@@ -265,7 +265,7 @@ def test_trigger_own_subscription_env():
 
     assert trigger.status_code == 200
     assert res.call_count == 1
-    assert res.calls[0].request.body != None
+    assert res.calls[0].request.body is not None
     parsed = json.loads(res.calls[0].request.body)
     assert parsed["payload"]["option"] == "test"
     assert parsed["payload"]["secret"] == "test2"
