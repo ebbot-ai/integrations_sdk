@@ -49,7 +49,7 @@ def test_workflow_server_connection():
     response = client.post("/connections", json=json_body)
     assert response.status_code == 201
     data = response.json()
-    get_response = client.get(f"/connections/{data["id"]}")
+    get_response = client.get(f"/connections/{data['id']}")
     assert get_response.status_code == 200
 
 

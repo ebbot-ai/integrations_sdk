@@ -125,7 +125,6 @@ installInstructions = "Docs on point, README magic"
     installInstructions=installInstructions,
 )
 def hook_trigger(dispatch, app: FastAPI):
-
     @app.post("/hook-trigger/{subscriptionId}")
     def hook_trigger(subscriptionId: str, data: HookData):
         dispatch(subscriptionId, data)

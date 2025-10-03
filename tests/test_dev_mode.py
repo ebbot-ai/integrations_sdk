@@ -28,7 +28,7 @@ def test_create_connection():
     response = client.post("/connections", json=json_body)
     assert response.status_code == 201
     data = response.json()
-    get_response = client.get(f"/connections/{data["id"]}")
+    get_response = client.get(f"/connections/{data['id']}")
     assert get_response.status_code == 200
 
 
@@ -36,7 +36,7 @@ def test_action_endpoint():
     response = client.post("/connections", json=json_body)
     data = response.json()
     result = client.post(
-        f"connections/{data["id"]}/call/say_hello_with_secret_and_env",
+        f"connections/{data['id']}/call/say_hello_with_secret_and_env",
         json={"password": "currywurst"},
     )
     assert result.status_code == 200
@@ -57,7 +57,7 @@ def test_save_subscription():
     response = client.post("/connections", json=json_body)
     data = response.json()
     result = client.post(
-        f"connections/f{data["id"]}/subscriptions",
+        f"connections/f{data['id']}/subscriptions",
         json={
             "triggerName": "hook_trigger",
             "callback": {

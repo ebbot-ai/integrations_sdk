@@ -16,7 +16,6 @@ from challenger_sdk.workflow import (
 
 
 class DevServerWorkflowStorage(WorkflowStorage):
-
     @override
     def save_connection(self, options: Vars = None, secrets: Vars = None) -> Connection:
         cursor = init_dev_db()
