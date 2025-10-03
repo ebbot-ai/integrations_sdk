@@ -270,3 +270,15 @@ def test_trigger_own_subscription_env():
     parsed = json.loads(res.calls[0].request.body)
     assert parsed["payload"]["option"] == "test"
     assert parsed["payload"]["secret"] == "test2"
+
+
+@responses.activate
+def test_trigger_endpoint_fail():
+    body = {"messageId": "myid", "message": "This is my message"}
+    subscriptionId = mocks.id()
+    mocks.get_subscription(mocks.id(), subscriptionId)
+    res = mocks.engine_callback(statusCode=404)
+    trigger = client.post(f"/hook-trigger/{subscriptionId}", json=body)
+
+    assert trigger.status_code == 404
+    assert res.call_count == 1
