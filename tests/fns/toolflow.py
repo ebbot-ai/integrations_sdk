@@ -1,7 +1,5 @@
-from typing import Callable
 from fastapi import FastAPI
 from pydantic import BaseModel
-from requests import post
 from challenger_sdk.component import (
     FunctionEnv,
     workflow_action,

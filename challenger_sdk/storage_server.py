@@ -1,6 +1,6 @@
 from typing import TypeVar, override
 from dataclasses import dataclass
-from typing import Type, override
+from typing import Type
 
 from fastapi import HTTPException
 from pydantic import BaseModel

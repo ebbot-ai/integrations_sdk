@@ -1,4 +1,3 @@
-from uuid import uuid4
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 import responses

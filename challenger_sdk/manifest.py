@@ -1,5 +1,4 @@
 from typing import (
-    Annotated,
     Optional,
     Type,
     TypedDict,
@@ -7,11 +6,9 @@ from typing import (
     List,
     Dict,
     Any,
-    NotRequired,
 )
 
 from pydantic import BaseModel
-from pydantic.json_schema import model_json_schema
 
 from challenger_sdk.component import EbbotComponent
 from challenger_sdk.triggers import Callback, Trigger
