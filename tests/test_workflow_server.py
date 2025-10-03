@@ -16,7 +16,14 @@ class Secrets(BaseModel):
     secret: str
 
 
-app = start_workflow_server("fns", "http://localhost:9000", mocks.key, Options, Secrets)
+def validator(secrets, options):
+    if options.notSecret == secrets.secret:
+        raise ValueError("Secret can't be the same as not secret")
+
+
+app = start_workflow_server(
+    "fns", "http://localhost:9000", mocks.key, Options, Secrets, validator=validator
+)
 client = TestClient(app)
 json_body = {"options": {"notSecret": "asdf"}, "secrets": {"secret": "asdfasdf"}}
 
@@ -58,6 +65,16 @@ def test_workflow_server_connection_no_options():
     mocks.post_connection(mocks.id(), empty_body)
     response = client.post("/connections", json=empty_body)
     assert response.status_code == 201
+
+
+@responses.activate
+def test_workflow_server_connection_validation():
+    invalid_body = {"options": {"notSecret": "secret"}, "secrets": {"secret": "secret"}}
+    id = mocks.id()
+    mocks.post_connection(id)
+    mocks.get_connection(id)
+    response = client.post("/connections", json=invalid_body)
+    assert response.status_code == 422
 
 
 @responses.activate

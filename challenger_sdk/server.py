@@ -10,7 +10,11 @@ from challenger_sdk.component import (
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from challenger_sdk.connection import EmptyOptions, connection_endpoints
+from challenger_sdk.connection import (
+    ConnectionValidator,
+    EmptyOptions,
+    connection_endpoints,
+)
 from challenger_sdk.dev_server import DevServerWorkflowStorage
 from challenger_sdk.manifest import create_manifest
 from challenger_sdk.storage_server import StorageServerWorkflowStorage
@@ -81,6 +85,7 @@ def start_workflow_server(
     title="Challenger SDK Workflow server",
     dev_mode: bool = False,
     install_instructions: Optional[str] = None,
+    validator: Optional[ConnectionValidator] = None,
 ):
     if dev_mode:
         storage = DevServerWorkflowStorage()
@@ -90,7 +95,7 @@ def start_workflow_server(
     triggers = _walk_package(path, Trigger)
     app = FastAPI(title=title)
     tool_endpoints(app, fns)
-    connection_endpoints(app, storage, options, secrets)
+    connection_endpoints(app, storage, options, secrets, validator)
     action_endpoints(app, storage, list(fns.values()))
     if len(triggers) > 0:
         register_triggers(app, storage, storage_server_key, list(triggers.values()))

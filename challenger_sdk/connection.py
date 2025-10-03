@@ -1,6 +1,6 @@
-from typing import Annotated, Any, Optional, Type
+from typing import Annotated, Any, Optional, Type, Callable
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from challenger_sdk.component import FunctionEnv
 from challenger_sdk.workflow import Connection, WorkflowStorage
 
@@ -12,15 +12,25 @@ class EmptyOptions(BaseModel):
     pass
 
 
+ConnectionValidator = Callable[[BaseModel, BaseModel], None]
+
+
 def connection_endpoints(
     app: FastAPI,
     storage: WorkflowStorage,
     optionsType: Optional[Type[BaseModel]] = EmptyOptions,
     secretsType: Optional[Type[BaseModel]] = EmptyOptions,
+    validator: Optional[ConnectionValidator] = None,
 ):
     class ServerConnection(BaseModel):
         secrets: Annotated[BaseModel, secretsType]
         options: Annotated[BaseModel, optionsType]
+
+        @model_validator(mode="after")
+        def valid(self):
+            if validator:
+                validator(self.secrets, self.options)
+            return self
 
     class ResultConnection(ServerConnection):
         id: str
