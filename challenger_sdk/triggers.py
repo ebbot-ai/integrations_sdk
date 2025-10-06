@@ -1,7 +1,7 @@
 from dataclasses import dataclass, asdict
 from inspect import signature
 import logging
-from typing import Callable, Optional, Union, Type, Any
+from typing import Annotated, Callable, Optional, Union, Type, Any
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, field_validator
 from requests import request
@@ -89,32 +89,20 @@ def workflow_trigger(
     return decorator
 
 
-def subscription_endpoint(
-    app: FastAPI, storage: WorkflowStorage, triggers: list[Trigger]
-):
+def subscription_endpoint(app: FastAPI, storage: WorkflowStorage, trigger: Trigger):
     class Subscription(BaseModel):
-        triggerName: str
         callback: Callback
-
-        @field_validator("triggerName", mode="after")
-        @classmethod
-        def valid_trigger(cls, val: str):
-            if val not in [trigger.name for trigger in triggers]:
-                raise ValueError("Invalid trigger name")
-            return val
-
-    @app.post("/connections/{connection_id}/subscriptions", status_code=201)
+        secrets: Annotated[BaseModel, trigger.triggerSecretsType]
+        options: Annotated[BaseModel, trigger.triggerOptionsType]
+    @app.post(
+        "/connections/{connection_id}/subscriptions/" + trigger.name, status_code=201
+    )
     def create_subscription(connection_id: str, subscription: Subscription):
         saved_subscription = storage.save_subscription(
             connection_id,
-            NewSubscription(
-                name=subscription.triggerName, callback=subscription.callback
-            ),
+            NewSubscription(name=trigger.name, callback=subscription.callback),
         )
-        trigger = next(
-            (t for t in triggers if t.name == subscription.triggerName), None
-        )
-        if trigger and trigger.events.created_listener:
+        if trigger.events.created_listener:
             try:
                 updated_subscription = trigger.events.created_listener(
                     saved_subscription
@@ -124,6 +112,13 @@ def subscription_endpoint(
                 storage.remove_subscription(connection_id, saved_subscription.id)
                 raise e
         return saved_subscription
+
+
+def subscription_endpoints(
+    app: FastAPI, storage: WorkflowStorage, triggers: list[Trigger]
+):
+    for trigger in triggers:
+        subscription_endpoint(app, storage, trigger)
 
 
 @dataclass

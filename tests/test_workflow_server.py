@@ -124,9 +124,10 @@ def test_save_subscription():
     mocks.post_subscription(connectionId, mocks.id())
 
     result = client.post(
-        f"connections/{connectionId}/subscriptions",
+        f"connections/{connectionId}/subscriptions/hook_trigger",
         json={
-            "triggerName": "hook_trigger",
+            "options": {},
+            "secrets": {},
             "callback": {
                 "type": "http",
                 "method": "post",
@@ -145,9 +146,10 @@ def test_save_subscription_trigger_created():
     mocks.post_subscription(connectionId, subId, data)
     patch_response = mocks.patch_subscription(connectionId, subId, data)
     result = client.post(
-        f"connections/{connectionId}/subscriptions",
+        f"connections/{connectionId}/subscriptions/on_created",
         json={
-            "triggerName": "on_created",
+            "options": {},
+            "secrets": {},
             "callback": {
                 "type": "http",
                 "method": "post",
@@ -174,14 +176,15 @@ def test_save_subscription_trigger_created_rollback():
             "method": "post",
             "url": "http://v8-engine.com/called",
         },
-        "options": {},
+        "options": None,
+        "secrets": None
     }
     mocks.post_subscription(connectionId, subscriptionId, json_data)
     remove_req = mocks.delete_subscription(connectionId, subscriptionId)
 
     with raises(Exception):
         client.post(
-            f"connections/{connectionId}/subscriptions",
+            f"connections/{connectionId}/subscriptions/on_created_fail",
             json={
                 "triggerName": "on_created_fail",
                 "callback": {
@@ -189,25 +192,12 @@ def test_save_subscription_trigger_created_rollback():
                     "method": "post",
                     "url": "http://v8-engine.com/called",
                 },
+                "options": {},
+                "secrets": {},
+
             },
         )
-
     assert remove_req.call_count == 1
-
-
-def test_save_subscription_invalid_trigger():
-    result = client.post(
-        "connections/a897cef1-f953-44c3-a054-6290503c54a5/subscriptions",
-        json={
-            "triggerName": "no_trigger",
-            "callback": {
-                "type": "http",
-                "method": "post",
-                "url": "http://v8-engine.com/called",
-            },
-        },
-    )
-    assert result.status_code == 422
 
 
 @responses.activate
