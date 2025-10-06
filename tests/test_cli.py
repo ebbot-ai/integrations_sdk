@@ -185,9 +185,7 @@ def test_set_persona_error():
     with patch("requests.patch") as mock_request:
         mock_request.return_value.status_code = 400
         mock_request.return_value.reason = "Bad Request"
-        with pytest.raises(
-            Exception, match="Could not set persona: 400 Bad Request"
-        ):
+        with pytest.raises(Exception, match="Could not set persona: 400 Bad Request"):
             set_persona("friendly", "bot-id")
     del os.environ["CHALLENGER_URL"]
     del os.environ["CHALLENGER_TOKEN"]

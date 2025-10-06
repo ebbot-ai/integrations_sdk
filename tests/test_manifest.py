@@ -32,7 +32,7 @@ def test_manifest_data():
     assert response.status_code == 200
     data = response.json()
     assert data["installInstructions"] == installInstructions
-    assert data["subscription"] != None
+    assert data["subscription"] is not None
     component = data["actions"][0]
 
     assert component["name"] == "store_favorite_food"
@@ -93,7 +93,7 @@ def test_manifest_exclude_ebbot():
     assert response.status_code == 200
     data = response.json()
     # Update user requires ebbot arguments and should not be included.
-    assert get_component(data["actions"], "retrieve_user") == None
+    assert get_component(data["actions"], "retrieve_user") is None
 
 
 def test_manifest_component_result_null():
@@ -104,8 +104,8 @@ def test_manifest_component_result_null():
     data = response.json()
     # Update user requires ebbot arguments and should not be included.
     component = get_component(data["actions"], "store_favorite_food")
-    assert component != None
-    assert component["schema"]["result"] == None
+    assert component is not None
+    assert component["schema"]["result"] is None
 
 
 def test_manifest_connection():

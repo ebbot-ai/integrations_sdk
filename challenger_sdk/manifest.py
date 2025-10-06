@@ -1,5 +1,4 @@
 from typing import (
-    Annotated,
     Optional,
     Type,
     TypedDict,
@@ -7,11 +6,9 @@ from typing import (
     List,
     Dict,
     Any,
-    NotRequired,
 )
 
 from pydantic import BaseModel
-from pydantic.json_schema import model_json_schema
 
 from challenger_sdk.component import EbbotComponent
 from challenger_sdk.triggers import Callback, Trigger
@@ -91,7 +88,9 @@ def connection_schema(
     optionsType: Optional[Type[BaseModel]] = None,
     secretsType: Optional[Type[BaseModel]] = None,
 ):
-    base = lambda: {"type": "object", "properties": {}, "required": []}
+    def base():
+        return {"type": "object", "properties": {}, "required": []}
+
     schema = base()
     schema["properties"]["options"] = (
         optionsType.model_json_schema() if optionsType else base()

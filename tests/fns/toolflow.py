@@ -1,7 +1,5 @@
-from typing import Callable
 from fastapi import FastAPI
 from pydantic import BaseModel
-from requests import post
 from challenger_sdk.component import (
     FunctionEnv,
     workflow_action,
@@ -125,7 +123,6 @@ installInstructions = "Docs on point, README magic"
     installInstructions=installInstructions,
 )
 def hook_trigger(dispatch, app: FastAPI):
-
     @app.post("/hook-trigger/{subscriptionId}")
     def hook_trigger(subscriptionId: str, data: HookData):
         dispatch(subscriptionId, data)
