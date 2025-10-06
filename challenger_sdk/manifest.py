@@ -46,6 +46,7 @@ class TriggerDefinition(TypedDict):
     name: str
     description: str
     schema: JSONSchema
+    subscriptionSchema: JSONSchema
     installInstructions: Optional[str]
 
 
@@ -53,7 +54,6 @@ class Manifest(TypedDict):
     triggers: list[TriggerDefinition]
     actions: list[ActionDefinition]
     connection: Optional[JSONSchema]
-    subscription: Optional[JSONSchema]
     installInstructions: Optional[str]
 
 
@@ -68,7 +68,6 @@ def create_manifest(
         triggers=trigger_definitions(triggers),
         actions=actions_from_components(components),
         connection=connection_schema(optionsType, secretsType),
-        subscription=subscription_schema(triggers),
         installInstructions=installInstructions,
     )
 
@@ -88,16 +87,13 @@ def connection_schema(
     optionsType: Optional[Type[BaseModel]] = None,
     secretsType: Optional[Type[BaseModel]] = None,
 ):
-    def base():
-        return {"type": "object", "properties": {}, "required": []}
-
-    schema = base()
+    schema = _schema_base()
     schema["properties"]["options"] = (
-        optionsType.model_json_schema() if optionsType else base()
+        optionsType.model_json_schema() if optionsType else _schema_base()
     )
     schema["required"].append("options")
     schema["properties"]["secrets"] = (
-        secretsType.model_json_schema() if secretsType else base()
+        secretsType.model_json_schema() if secretsType else _schema_base()
     )
     schema["required"].append("secrets")
     return schema
@@ -109,7 +105,8 @@ def trigger_definitions(triggers: list[Trigger]):
             type="trigger",
             name=trigger.name,
             description=trigger.description,
-            schema=_trigger_schema_from_trigger(trigger),
+            schema=_trigger_schema(trigger),
+            subscriptionSchema=_trigger_subscription_schema(trigger),
             installInstructions=trigger.installInstructions,
         )
         for trigger in triggers
@@ -129,7 +126,24 @@ def actions_from_components(components: list[EbbotComponent]) -> list[ActionDefi
     ]
 
 
-def _trigger_schema_from_trigger(trigger: Trigger):
+def _trigger_subscription_schema(trigger: Trigger):
+    schema = _schema_base()
+    schema["properties"]["callback"] = Callback.model_json_schema()
+    schema["properties"]["options"] = (
+        trigger.triggerOptionsType.model_json_schema()
+        if trigger.triggerOptionsType
+        else _schema_base()
+    )
+    schema["required"].append("options")
+    schema["properties"]["secrets"] = (
+        trigger.triggerSecretsType.model_json_schema()
+        if trigger.triggerSecretsType
+        else _schema_base()
+    )
+    return schema
+
+
+def _trigger_schema(trigger: Trigger):
     payloadSchema = (
         trigger.result.model_json_schema()
         if isinstance(trigger.result, type) and issubclass(trigger.result, BaseModel)
@@ -154,3 +168,7 @@ def _action_schema_from_llm_schema(comp: EbbotComponent):
         result=comp.result_schema(),
         errors=comp.error_schema(),
     )
+
+
+def _schema_base():
+    return {"type": "object", "properties": {}, "required": []}

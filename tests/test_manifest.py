@@ -32,7 +32,6 @@ def test_manifest_data():
     assert response.status_code == 200
     data = response.json()
     assert data["installInstructions"] == installInstructions
-    assert data["subscription"] is not None
     component = data["actions"][0]
 
     assert component["name"] == "store_favorite_food"
@@ -125,13 +124,25 @@ def test_manifest_connection():
     )
 
 
-def test_manifest_subscription():
+def test_manifest_trigger_subscription():
     response = client.get(
         "/manifest",
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["subscription"]["required"] == ["triggerName", "callback"]
+    assert data["triggers"][0]["subscriptionSchema"] is not None
+    assert (
+        data["triggers"][2]["subscriptionSchema"]["properties"]["options"][
+            "properties"
+        ]["option"]
+        is not None
+    )
+    assert (
+        data["triggers"][2]["subscriptionSchema"]["properties"]["secrets"][
+            "properties"
+        ]["secret"]
+        is not None
+    )
 
 
 def test_manifest_without_options_secrets():
