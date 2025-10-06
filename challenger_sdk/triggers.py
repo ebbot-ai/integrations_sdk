@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from challenger_sdk.component import FunctionEnv
 from challenger_sdk.connection import (
+    EmptyOptions,
     function_env_from_connection,
 )
 from challenger_sdk.storage_server import request_headers
@@ -69,8 +70,8 @@ def workflow_trigger(
     result: SchemaType,
     connectionEnv: list[str] = [],
     connectionSecrets: list[str] = [],
-    triggerOptions: Optional[Type[BaseModel]] = None,
-    triggerSecrets: Optional[Type[BaseModel]] = None,
+    triggerOptions: Optional[Type[BaseModel]] = EmptyOptions,
+    triggerSecrets: Optional[Type[BaseModel]] = EmptyOptions,
     installInstructions: Optional[str] = None,
 ):
     def decorator(func: Callable) -> Trigger:

@@ -64,8 +64,8 @@ default_subscription_data = {
         "method": "post",
         "url": "http://v8-engine.com/called",
     },
-    "options": None,
-    "secrets": None,
+    "options": {},
+    "secrets": {},
 }
 
 
