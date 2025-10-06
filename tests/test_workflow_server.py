@@ -177,7 +177,7 @@ def test_save_subscription_trigger_created_rollback():
             "url": "http://v8-engine.com/called",
         },
         "options": None,
-        "secrets": None
+        "secrets": None,
     }
     mocks.post_subscription(connectionId, subscriptionId, json_data)
     remove_req = mocks.delete_subscription(connectionId, subscriptionId)
@@ -194,10 +194,40 @@ def test_save_subscription_trigger_created_rollback():
                 },
                 "options": {},
                 "secrets": {},
-
             },
         )
     assert remove_req.call_count == 1
+
+
+@responses.activate
+def test_save_subscription_trigger_env_secrets():
+    connectionId = mocks.id()
+    subscriptionId = mocks.id()
+    json_data = {
+        "name": "hook_trigger_own_env_secret",
+        "callback": {
+            "type": "http",
+            "method": "post",
+            "url": "http://v8-engine.com/called",
+        },
+        "options": {"option": "opt"},
+        "secrets": {"secret": "secretopt"},
+    }
+    mocks.post_subscription(connectionId, subscriptionId, json_data)
+
+    response = client.post(
+        f"connections/{connectionId}/subscriptions/hook_trigger_own_env_secret",
+        json={
+            "callback": {
+                "type": "http",
+                "method": "post",
+                "url": "http://v8-engine.com/called",
+            },
+            "options": {"option": "opt"},
+            "secrets": {"secret": "secretopt"},
+        },
+    )
+    assert response.status_code == 201
 
 
 @responses.activate

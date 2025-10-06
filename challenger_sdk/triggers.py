@@ -94,13 +94,23 @@ def subscription_endpoint(app: FastAPI, storage: WorkflowStorage, trigger: Trigg
         callback: Callback
         secrets: Annotated[BaseModel, trigger.triggerSecretsType]
         options: Annotated[BaseModel, trigger.triggerOptionsType]
+
     @app.post(
         "/connections/{connection_id}/subscriptions/" + trigger.name, status_code=201
     )
     def create_subscription(connection_id: str, subscription: Subscription):
         saved_subscription = storage.save_subscription(
             connection_id,
-            NewSubscription(name=trigger.name, callback=subscription.callback),
+            NewSubscription(
+                name=trigger.name,
+                callback=subscription.callback,
+                options=subscription.options.model_dump()
+                if subscription.options
+                else None,
+                secrets=subscription.secrets.model_dump()
+                if subscription.secrets
+                else None,
+            ),
         )
         if trigger.events.created_listener:
             try:

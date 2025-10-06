@@ -62,7 +62,7 @@ def test_save_subscription():
                 "url": "http://v8-engine.com/called",
             },
             "secrets": {},
-            "options": {}
+            "options": {},
         },
     )
     assert result.status_code == 201
