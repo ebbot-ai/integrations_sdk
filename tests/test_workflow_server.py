@@ -177,7 +177,7 @@ def test_save_subscription_trigger_created_rollback():
             "url": "http://v8-engine.com/called",
         },
         "options": {},
-        "secrets": {}
+        "secrets": {},
     }
     mocks.post_subscription(connectionId, subscriptionId, json_data)
     remove_req = mocks.delete_subscription(connectionId, subscriptionId)
