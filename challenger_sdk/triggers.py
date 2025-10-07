@@ -91,10 +91,13 @@ def workflow_trigger(
 
 
 def subscription_endpoint(app: FastAPI, storage: WorkflowStorage, trigger: Trigger):
-    class Subscription(BaseModel):
-        callback: Callback
+    class SubscriptionData(BaseModel):
         secrets: Annotated[BaseModel, trigger.triggerSecretsType]
         options: Annotated[BaseModel, trigger.triggerOptionsType]
+
+    class Subscription(BaseModel):
+        callback: Callback
+        data: SubscriptionData
 
     @app.post(
         "/connections/{connection_id}/subscriptions/" + trigger.name, status_code=201
@@ -105,11 +108,11 @@ def subscription_endpoint(app: FastAPI, storage: WorkflowStorage, trigger: Trigg
             NewSubscription(
                 name=trigger.name,
                 callback=subscription.callback,
-                options=subscription.options.model_dump()
-                if subscription.options
+                options=subscription.data.options.model_dump()
+                if subscription.data.options
                 else None,
-                secrets=subscription.secrets.model_dump()
-                if subscription.secrets
+                secrets=subscription.data.secrets.model_dump()
+                if subscription.data.secrets
                 else None,
             ),
         )

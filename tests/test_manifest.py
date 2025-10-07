@@ -132,15 +132,15 @@ def test_manifest_trigger_subscription():
     data = response.json()
     assert data["triggers"][0]["subscriptionSchema"] is not None
     assert (
-        data["triggers"][2]["subscriptionSchema"]["properties"]["options"][
-            "properties"
-        ]["option"]
+        data["triggers"][2]["subscriptionSchema"]["properties"]["data"]["properties"][
+            "options"
+        ]["properties"]["option"]
         is not None
     )
     assert (
-        data["triggers"][2]["subscriptionSchema"]["properties"]["secrets"][
-            "properties"
-        ]["secret"]
+        data["triggers"][2]["subscriptionSchema"]["properties"]["data"]["properties"][
+            "secrets"
+        ]["properties"]["secret"]
         is not None
     )
 

@@ -129,13 +129,14 @@ def actions_from_components(components: list[EbbotComponent]) -> list[ActionDefi
 def _trigger_subscription_schema(trigger: Trigger):
     schema = _schema_base()
     schema["properties"]["callback"] = Callback.model_json_schema()
-    schema["properties"]["options"] = (
+    schema["properties"]["data"] = _schema_base()
+    schema["properties"]["data"]["properties"]["options"] = (
         trigger.triggerOptionsType.model_json_schema()
         if trigger.triggerOptionsType
         else _schema_base()
     )
     schema["required"].append("options")
-    schema["properties"]["secrets"] = (
+    schema["properties"]["data"]["properties"]["secrets"] = (
         trigger.triggerSecretsType.model_json_schema()
         if trigger.triggerSecretsType
         else _schema_base()

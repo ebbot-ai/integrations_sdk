@@ -126,8 +126,10 @@ def test_save_subscription():
     result = client.post(
         f"connections/{connectionId}/subscriptions/hook_trigger",
         json={
-            "options": {},
-            "secrets": {},
+            "data": {
+                "options": {},
+                "secrets": {},
+            },
             "callback": {
                 "type": "http",
                 "method": "post",
@@ -148,8 +150,10 @@ def test_save_subscription_trigger_created():
     result = client.post(
         f"connections/{connectionId}/subscriptions/on_created",
         json={
-            "options": {},
-            "secrets": {},
+            "data": {
+                "options": {},
+                "secrets": {},
+            },
             "callback": {
                 "type": "http",
                 "method": "post",
@@ -192,8 +196,10 @@ def test_save_subscription_trigger_created_rollback():
                     "method": "post",
                     "url": "http://v8-engine.com/called",
                 },
-                "options": {},
-                "secrets": {},
+                "data": {
+                    "options": {},
+                    "secrets": {},
+                },
             },
         )
     assert remove_req.call_count == 1
@@ -223,8 +229,10 @@ def test_save_subscription_trigger_env_secrets():
                 "method": "post",
                 "url": "http://v8-engine.com/called",
             },
-            "options": {"option": "opt"},
-            "secrets": {"secret": "secretopt"},
+            "data": {
+                "options": {"option": "opt"},
+                "secrets": {"secret": "secretopt"},
+            },
         },
     )
     assert response.status_code == 201

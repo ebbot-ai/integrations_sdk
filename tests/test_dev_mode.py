@@ -54,15 +54,17 @@ def test_save_subscription():
     response = client.post("/connections", json=json_body)
     data = response.json()
     result = client.post(
-        f"connections/f{data['id']}/subscriptions/hook_trigger",
+        f"connections/{data['id']}/subscriptions/hook_trigger",
         json={
             "callback": {
                 "type": "http",
                 "method": "post",
                 "url": "http://v8-engine.com/called",
             },
-            "secrets": {},
-            "options": {},
+            "data": {
+                "secrets": {},
+                "options": {},
+            },
         },
     )
     assert result.status_code == 201
