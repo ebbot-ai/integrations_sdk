@@ -59,10 +59,7 @@ def _walk_package(package_name: str, type: Type[T]) -> dict[str, T]:
         collected[comp.name] = comp
 
     for _, name, _ in pkgutil.walk_packages(pkg.__path__, package_name + "."):
-        try:
-            mod = importlib.import_module(name)
-        except ImportError:
-            continue
+        mod = importlib.import_module(name)
         for comp in list_funcs_in_module(mod, type):
             collected[comp.name] = comp
     return collected
