@@ -153,4 +153,6 @@ def test_manifest_trigger_without_options_secrets():
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["triggers"][0]["subscriptionSchema"]["properties"]["data"]["required"] == ["options", "secrets"]
+    assert data["triggers"][0]["subscriptionSchema"]["properties"]["data"][
+        "required"
+    ] == ["options", "secrets"]
