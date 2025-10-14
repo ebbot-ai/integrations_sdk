@@ -19,7 +19,7 @@ from challenger_sdk.dev_server import DevServerWorkflowStorage
 from challenger_sdk.manifest import create_manifest
 from challenger_sdk.storage_server import StorageServerWorkflowStorage
 from challenger_sdk.tools import tool_endpoints
-from challenger_sdk.triggers import Trigger, register_triggers, subscription_endpoint
+from challenger_sdk.triggers import Trigger, register_triggers, subscription_endpoints
 
 
 class HasName(Protocol):
@@ -96,7 +96,7 @@ def start_workflow_server(
     action_endpoints(app, storage, list(fns.values()))
     if len(triggers) > 0:
         register_triggers(app, storage, storage_server_key, list(triggers.values()))
-        subscription_endpoint(app, storage, list(triggers.values()))
+        subscription_endpoints(app, storage, list(triggers.values()))
 
     @app.get("/manifest")
     def get_manifest():

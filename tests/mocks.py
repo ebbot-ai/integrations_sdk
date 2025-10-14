@@ -65,6 +65,7 @@ default_subscription_data = {
         "url": "http://v8-engine.com/called",
     },
     "options": {},
+    "secrets": {},
 }
 
 
@@ -75,13 +76,7 @@ def post_subscription(
         url=f"http://localhost:9000/connections/{connectionId}/subscriptions",
         status=201,
         match=[
-            responses.matchers.json_params_matcher(
-                {
-                    **data,
-                    "options": None,
-                    "secrets": None,
-                }
-            ),
+            responses.matchers.json_params_matcher(data),
             responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
         ],
         json={**data, "id": subscriptionId, "connectionId": connectionId},
