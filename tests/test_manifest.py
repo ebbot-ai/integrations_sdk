@@ -145,10 +145,12 @@ def test_manifest_trigger_subscription():
     )
 
 
-def test_manifest_without_options_secrets():
+def test_manifest_trigger_without_options_secrets():
     boring_app = start_workflow_server("fns", "http://server.com", "key")
     client = TestClient(boring_app)
     response = client.get(
         "/manifest",
     )
     assert response.status_code == 200
+    data = response.json()
+    assert data["triggers"][0]["subscriptionSchema"]["properties"]["data"]["required"] == ["options", "secrets"]

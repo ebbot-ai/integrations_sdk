@@ -130,6 +130,7 @@ def _trigger_subscription_schema(trigger: Trigger):
     schema = _schema_base()
     schema["properties"]["callback"] = Callback.model_json_schema()
     schema["properties"]["data"] = _schema_base()
+    schema["properties"]["data"]["required"] = ["options", "secrets"]
     schema["properties"]["data"]["properties"]["options"] = (
         trigger.triggerOptionsType.model_json_schema()
         if trigger.triggerOptionsType
