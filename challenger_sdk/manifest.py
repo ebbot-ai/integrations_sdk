@@ -136,7 +136,6 @@ def _trigger_subscription_schema(trigger: Trigger):
         if trigger.triggerOptionsType
         else _schema_base()
     )
-    schema["required"].append("options")
     schema["properties"]["data"]["properties"]["secrets"] = (
         trigger.triggerSecretsType.model_json_schema()
         if trigger.triggerSecretsType
