@@ -1,3 +1,4 @@
+from typing import Literal
 from fastapi import FastAPI
 from pydantic import BaseModel
 from challenger_sdk.component import (
@@ -5,7 +6,12 @@ from challenger_sdk.component import (
     workflow_action,
     FieldInfo,
 )
-from challenger_sdk.triggers import GetEnvFn, TriggerEvents, workflow_trigger
+from challenger_sdk.triggers import (
+    GetEnvFn,
+    TriggerEvents,
+    with_triggers,
+    workflow_trigger,
+)
 from challenger_sdk.workflow import Subscription
 
 
@@ -114,6 +120,11 @@ class HookData(BaseModel):
     message: str
 
 
+class HookDataWithEnv(BaseModel):
+    option: str
+    secret: str
+
+
 installInstructions = "Docs on point, README magic"
 
 
@@ -130,7 +141,7 @@ def hook_trigger(dispatch, app: FastAPI):
 
 @workflow_trigger(
     description="env, secrets from connection",
-    result=HookData,
+    result=HookDataWithEnv,
     connectionEnv=["notSecret"],
     connectionSecrets=["secret"],
     installInstructions=installInstructions,
@@ -141,7 +152,7 @@ def hook_trigger_env_secret(dispatch, app: FastAPI, getEnv: GetEnvFn):
         env = getEnv(subscriptionId)
         dispatch(
             subscriptionId,
-            {"option": env.info["notSecret"], "secret": env.secrets["secret"]},
+            HookDataWithEnv(option=env.info["notSecret"], secret=env.secrets["secret"]),
         )
 
 
@@ -193,3 +204,24 @@ def on_created_fail(dispatch, app: FastAPI, events: TriggerEvents):
         raise Exception("No, not like that")
 
     events.on_created(call_me_on_created)
+
+
+@with_triggers(["hook_trigger", "hook_trigger_own_env_secret"])
+def triggers(dispatch, getEnv: GetEnvFn, app: FastAPI):
+    class Payload(BaseModel):
+        type: Literal["hook_trigger", "hook_trigger_secret"]
+        messageId: str
+        message: str
+
+    @app.post("/multiple-triggers/{subscriptionId}")
+    def shared_fn(subscriptionId, payload: Payload):
+        if payload.type == "hook_trigger":
+            return dispatch(
+                subscriptionId,
+                HookData(messageId=payload.messageId, message=payload.message),
+            )
+        env = getEnv(subscriptionId)
+        dispatch(
+            subscriptionId,
+            {"option": env.info["option"], "secret": env.secrets["secret"]},
+        )

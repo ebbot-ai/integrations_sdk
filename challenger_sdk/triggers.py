@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 SchemaType = Union[Type[BaseModel], dict]
 GetEnvFn = Callable[[str], FunctionEnv]
+GetTriggersEnvFn = Callable[[str, str], FunctionEnv]
 
 ListenerCallback = Callable[[Subscription], Subscription]
 
@@ -63,6 +64,18 @@ class Trigger(BaseModel):
                     f"Invalid parameter '{param.name}' in function '{value.__name__}'. Must be one of {sorted(allowed)}"
                 )
         return value
+
+
+class Triggers(BaseModel):
+    triggers: list[str]
+    call: Callable
+
+
+def with_triggers(triggers: list[str]):
+    def decorator(func: Callable):
+        return Triggers(triggers=triggers, call=func)
+
+    return decorator
 
 
 def workflow_trigger(
@@ -204,3 +217,83 @@ def register_triggers(
 ):
     for trigger in triggers:
         activate_trigger(storage, auth_key, app, trigger)
+
+
+class InvalidTriggerException(Exception):
+    def __init__(self, triggerName):
+        super().__init__(f"Invalid trigger: {triggerName}")
+
+
+def activate_triggers_handler(
+    storage: WorkflowStorage,
+    auth_key: str,
+    app: FastAPI,
+    triggers_handler: Triggers,
+    triggers: dict[str, Trigger],
+):
+    sig = signature(triggers_handler.call)
+    for name in triggers_handler.triggers:
+        if name not in triggers.keys():
+            raise InvalidTriggerException(name)
+
+    def dispatch(subscription_id: str, data):
+        subscription = storage.get_subscription(subscription_id)
+        trigger_data = TriggerData(
+            str(uuid4()),
+            subscription.name,
+            subscription.connectionId,
+            subscription_id,
+            data.model_dump() if isinstance(data, BaseModel) else data,
+        )
+        response = request(
+            subscription.callback.method.capitalize(),
+            subscription.callback.url,
+            json=asdict(trigger_data),
+            headers=request_headers(auth_key),
+        )
+        if response.status_code >= 400:
+            logger.error(
+                f"Error firing trigger: {subscription.name} for subscription {subscription.id} (Status code: {response.status_code})"
+            )
+            raise HTTPException(
+                status_code=response.status_code, detail=response.reason
+            )
+
+    extra_args: dict[str, Any] = {}
+    if "app" in sig.parameters:
+        extra_args["app"] = app
+    if "getEnv" in sig.parameters:
+
+        def get_env(subscription_id: str):
+            subscription = storage.get_subscription(subscription_id)
+            trigger_obj = triggers.get(subscription.name)
+
+            if not trigger_obj:
+                raise InvalidTriggerException(subscription.name)
+            connection = storage.get_connection(subscription.connectionId)
+            function_env = function_env_from_connection(
+                trigger_obj.env, trigger_obj.secrets, connection
+            )
+
+            if trigger_obj.triggerOptionsType:
+                options = trigger_obj.triggerOptionsType(**subscription.options or {})
+                function_env.info.update(options.model_dump())
+            if trigger_obj.triggerSecretsType:
+                secrets = trigger_obj.triggerSecretsType(**subscription.secrets or {})
+                function_env.secrets.update(secrets.model_dump())
+            return function_env
+
+        extra_args["getEnv"] = get_env
+
+    triggers_handler.call(dispatch, **extra_args)
+
+
+def register_triggers_handlers(
+    app: FastAPI,
+    storage: WorkflowStorage,
+    auth_key: str,
+    triggers: dict[str, Trigger],
+    triggers_handlers: list[Triggers],
+):
+    for handler in triggers_handlers:
+        activate_triggers_handler(storage, auth_key, app, handler, triggers)

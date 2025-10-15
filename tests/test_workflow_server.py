@@ -334,3 +334,54 @@ def test_trigger_endpoint_fail():
 
     assert trigger.status_code == 404
     assert res.call_count == 1
+
+
+@responses.activate
+def test_trigger_multiple_first():
+    body = {
+        "type": "hook_trigger",
+        "messageId": "myid",
+        "message": "This is my message",
+    }
+    connectionId = mocks.id()
+    subscriptionId = mocks.id()
+    mocks.get_connection(connectionId)
+    mocks.get_subscription(connectionId, subscriptionId)
+    res = mocks.engine_callback()
+    trigger = client.post(f"/multiple-triggers/{subscriptionId}", json=body)
+    assert trigger.status_code == 200
+    assert res.call_count == 1
+    assert res.calls[0].request.body is not None
+    parsed = json.loads(res.calls[0].request.body)
+    assert parsed["payload"]["messageId"] == "myid"
+    assert parsed["payload"]["message"] == "This is my message"
+
+
+@responses.activate
+def test_trigger_multiple_second():
+    body = {
+        "type": "hook_trigger_secret",
+        "messageId": "myid",
+        "message": "This is my message",
+    }
+    connectionId = mocks.id()
+    subscriptionId = mocks.id()
+    mocks.get_connection(connectionId)
+    mocks.get_subscription(
+        connectionId,
+        subscriptionId,
+        {
+            **mocks.default_subscription_data,
+            "name": "hook_trigger_own_env_secret",
+            "options": {"option": "test"},
+            "secrets": {"secret": "test2"},
+        },
+    )
+    res = mocks.engine_callback()
+    trigger = client.post(f"/multiple-triggers/{subscriptionId}", json=body)
+    assert trigger.status_code == 200
+    assert res.call_count == 1
+    assert res.calls[0].request.body is not None
+    parsed = json.loads(res.calls[0].request.body)
+    assert parsed["payload"]["option"] == "test"
+    assert parsed["payload"]["secret"] == "test2"
