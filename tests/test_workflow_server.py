@@ -249,6 +249,31 @@ def test_trigger_subscription():
     assert res.call_count == 1
 
 
+def test_auth_token_required():
+    secure_app = start_workflow_server(
+        "fns",
+        "http://localhost:9000",
+        mocks.key,
+        Options,
+        Secrets,
+        validator=validator,
+        auth_token="supersecret",
+    )
+    secure_client = TestClient(secure_app)
+
+    # Missing header
+    r = secure_client.get("/manifest")
+    assert r.status_code == 401
+
+    # Wrong header
+    r = secure_client.get("/manifest", headers={"Authorization": "Bearer wrong"})
+    assert r.status_code == 401
+
+    # Correct header
+    r = secure_client.get("/manifest", headers={"Authorization": "Bearer supersecret"})
+    assert r.status_code == 200
+
+
 @responses.activate
 def test_trigger_subscription_env():
     body = {"messageId": "myid", "message": "This is my message"}
