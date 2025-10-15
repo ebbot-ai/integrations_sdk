@@ -20,7 +20,13 @@ from challenger_sdk.dev_server import DevServerWorkflowStorage
 from challenger_sdk.manifest import create_manifest
 from challenger_sdk.storage_server import StorageServerWorkflowStorage
 from challenger_sdk.tools import tool_endpoints
-from challenger_sdk.triggers import Trigger, register_triggers, subscription_endpoints
+from challenger_sdk.triggers import (
+    Trigger,
+    Triggers,
+    register_triggers,
+    register_triggers_handlers,
+    subscription_endpoints,
+)
 
 
 class HasName(Protocol):
@@ -66,6 +72,33 @@ def _walk_package(package_name: str, type: Type[T]) -> dict[str, T]:
     return collected
 
 
+def _walk_package_multiple_trigger_handlers(package_name: str) -> dict[str, Triggers]:
+    """Walk a package and gather all Triggers instances mapping each trigger name to its handler object.
+
+    If a Triggers instance lists multiple trigger names, each name will map
+    to the same Triggers object. Later instances with the same trigger name
+    override earlier ones (mirrors _walk_package behavior).
+    """
+    collected: dict[str, Triggers] = {}
+    pkg = importlib.import_module(package_name)
+
+    def add_triggers(mod):
+        for obj in vars(mod).values():
+            if isinstance(obj, Triggers):
+                for trig_name in obj.triggers:
+                    collected[trig_name] = obj
+
+    if not hasattr(pkg, "__path__"):
+        add_triggers(pkg)
+        return collected
+
+    add_triggers(pkg)
+    for _, name, _ in pkgutil.walk_packages(pkg.__path__, package_name + "."):
+        mod = importlib.import_module(name)
+        add_triggers(mod)
+    return collected
+
+
 def start_server(path, title="Challenger sdk server"):
     fns = _walk_package(path, EbbotComponent)
     app = FastAPI(title=title)
@@ -92,6 +125,7 @@ def start_workflow_server(
         storage = StorageServerWorkflowStorage(storage_server_url, storage_server_key)
     fns = _walk_package(path, EbbotComponent)
     triggers = _walk_package(path, Trigger)
+    triggers_handlers = _walk_package_multiple_trigger_handlers(path)
     app = FastAPI(title=title)
 
     if auth_token:
@@ -107,9 +141,14 @@ def start_workflow_server(
     tool_endpoints(app, fns)
     connection_endpoints(app, storage, options, secrets, validator)
     action_endpoints(app, storage, list(fns.values()))
+
     if len(triggers) > 0:
         register_triggers(app, storage, storage_server_key, list(triggers.values()))
         subscription_endpoints(app, storage, list(triggers.values()))
+    if len(triggers_handlers.values()) > 0:
+        register_triggers_handlers(
+            app, storage, storage_server_key, triggers, list(triggers_handlers.values())
+        )
 
     @app.get("/manifest")
     def get_manifest():
