@@ -7,7 +7,8 @@ from challenger_sdk.actions import action_endpoints
 from challenger_sdk.component import (
     EbbotComponent,
 )
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from challenger_sdk.connection import (
@@ -83,6 +84,7 @@ def start_workflow_server(
     dev_mode: bool = False,
     install_instructions: Optional[str] = None,
     validator: Optional[ConnectionValidator] = None,
+    auth_token: Optional[str] = None,
 ):
     if dev_mode:
         storage = DevServerWorkflowStorage()
@@ -91,6 +93,17 @@ def start_workflow_server(
     fns = _walk_package(path, EbbotComponent)
     triggers = _walk_package(path, Trigger)
     app = FastAPI(title=title)
+
+    if auth_token:
+
+        @app.middleware("http")
+        async def _auth_middleware(request: Request, call_next):
+            auth_header = request.headers.get("Authorization")
+            expected = f"Bearer {auth_token}"
+            if auth_header != expected:
+                return JSONResponse({"detail": "Unauthorized"}, status_code=401)
+            return await call_next(request)
+
     tool_endpoints(app, fns)
     connection_endpoints(app, storage, options, secrets, validator)
     action_endpoints(app, storage, list(fns.values()))
