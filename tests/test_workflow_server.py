@@ -346,9 +346,15 @@ def test_trigger_multiple_first():
     connectionId = mocks.id()
     subscriptionId = mocks.id()
     mocks.get_connection(connectionId)
+    sub_data = {
+        **mocks.default_subscription_data,
+        "connectionId": connectionId,
+        "id": subscriptionId,
+    }
     mocks.get_subscription(connectionId, subscriptionId)
+    mocks.get_subscriptions(subscriptions=[sub_data], total=1, name="hook_trigger")
     res = mocks.engine_callback()
-    trigger = client.post(f"/multiple-triggers/{subscriptionId}", json=body)
+    trigger = client.post("/multiple-triggers", json=body)
     assert trigger.status_code == 200
     assert res.call_count == 1
     assert res.calls[0].request.body is not None
@@ -367,21 +373,64 @@ def test_trigger_multiple_second():
     connectionId = mocks.id()
     subscriptionId = mocks.id()
     mocks.get_connection(connectionId)
-    mocks.get_subscription(
-        connectionId,
-        subscriptionId,
-        {
-            **mocks.default_subscription_data,
-            "name": "hook_trigger_own_env_secret",
-            "options": {"option": "test"},
-            "secrets": {"secret": "test2"},
-        },
+    sub_data = {
+        **mocks.default_subscription_data,
+        "connectionId": connectionId,
+        "id": subscriptionId,
+        "name": "hook_trigger_own_env_secret",
+        "options": {"option": "test"},
+        "secrets": {"secret": "test2"},
+    }
+    mocks.get_subscription(connectionId, subscriptionId, sub_data)
+    mocks.get_subscriptions(
+        subscriptions=[sub_data], total=1, name="hook_trigger_own_env_secret"
     )
     res = mocks.engine_callback()
-    trigger = client.post(f"/multiple-triggers/{subscriptionId}", json=body)
+    trigger = client.post("/multiple-triggers", json=body)
     assert trigger.status_code == 200
     assert res.call_count == 1
     assert res.calls[0].request.body is not None
     parsed = json.loads(res.calls[0].request.body)
     assert parsed["payload"]["option"] == "test"
     assert parsed["payload"]["secret"] == "test2"
+
+
+@responses.activate
+def test_get_subscriptions_trigger():
+    con_id = mocks.id()
+    mocks.get_connection(con_id)
+    # create 5 subscriptions for multisub_trigger with unique names
+    unique_names = [f"unique-{i}" for i in range(5)]
+    subscriptions: list[dict] = []
+    id_pairs: list[tuple[str, str]] = []
+
+    for i, name in enumerate(unique_names):
+        sub_id = mocks.id()
+
+        subscription_data = {
+            "id": sub_id,
+            "connectionId": con_id,
+            "name": "multisub_trigger",
+            "callback": {
+                "type": "http",
+                "method": "post",
+                "url": "http://v8-engine.com/called",
+            },
+            "options": {"name": name},
+            "secrets": {},
+        }
+        subscriptions.append({**subscription_data})
+        id_pairs.append((sub_id, name))
+        mocks.get_subscription(con_id, sub_id, subscription_data)
+    mocks.get_subscriptions(subscriptions=subscriptions, total=len(subscriptions))
+    res = mocks.engine_callback()
+    response = client.get("/endpoint")
+    assert response.status_code == 200
+    assert res.call_count == len(subscriptions)
+    name_map = {sub_id: name for sub_id, name in id_pairs}
+    for call in res.calls:
+        assert call.request.body is not None
+        data = json.loads(call.request.body)
+        payload = data["payload"]
+        assert payload["messageId"] in name_map
+        assert payload["message"] == name_map[payload["messageId"]]

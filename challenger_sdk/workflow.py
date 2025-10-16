@@ -32,6 +32,11 @@ class Subscription(NewSubscription):
     connectionId: str
 
 
+class SubscriptionResult(BaseModel):
+    total: int
+    data: list[Subscription]
+
+
 class WorkflowStorage(Protocol):
     def save_connection(
         self, options: Vars = None, secrets: Vars = None
@@ -48,3 +53,7 @@ class WorkflowStorage(Protocol):
     def remove_subscription(self, connectionId: str, subscriptionId: str): ...
 
     def update_subscription(self, subscription: Subscription) -> Subscription: ...
+
+    def get_subscriptions(
+        self, limit: int = 1000, offset: int = 0, name: Optional[str] = None
+    ) -> SubscriptionResult: ...

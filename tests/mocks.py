@@ -122,3 +122,39 @@ def engine_callback(url="http://v8-engine.com/called", statusCode=200):
             responses.matchers.header_matcher({"Authorization": f"Bearer {key}"}),
         ],
     )
+
+
+def get_subscriptions(
+    subscriptions: list[dict] | None = None,
+    total: int | None = None,
+    name: str | None = None,
+):
+    if subscriptions is None:
+        # provide a default subscription entry
+        subscriptionId = id()
+        connectionId = id()
+        subscriptions = [
+            {
+                **default_subscription_data,
+                "id": subscriptionId,
+                "connectionId": connectionId,
+            }
+        ]
+    if total is None:
+        total = len(subscriptions)
+
+    matchers = [responses.matchers.header_matcher({"Authorization": f"Bearer {key}"})]
+    if name is not None:
+        # ensure the request includes the correct 'name' query param when provided
+        matchers.append(
+            responses.matchers.query_param_matcher(
+                {"name": name, "limit": "1000", "offset": "0"}
+            )
+        )
+
+    return responses.get(
+        url="http://localhost:9000/subscriptions",
+        status=200,
+        match=matchers,
+        json={"total": total, "data": subscriptions},
+    )

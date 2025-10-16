@@ -1,7 +1,6 @@
 from typing import TypeVar, override
 from dataclasses import dataclass
 from typing import Type
-
 from fastapi import HTTPException
 from pydantic import BaseModel
 import requests
@@ -11,6 +10,7 @@ from challenger_sdk.workflow import (
     Subscription,
     Vars,
     WorkflowStorage,
+    SubscriptionResult,
 )
 
 
@@ -93,6 +93,20 @@ class StorageServerWorkflowStorage(WorkflowStorage):
             ),
             Subscription,
         )
+
+    @override
+    def get_subscriptions(
+        self, limit: int = 1000, offset: int = 0, name: str | None = None
+    ):
+        params: dict[str, int | str] = {"limit": limit, "offset": offset}
+        if name:
+            params["name"] = name
+        result = requests.get(
+            f"{self.server_url}/subscriptions",
+            headers=request_headers(self.auth_key),
+            params=params,
+        )
+        return _response_handler(result, SubscriptionResult)
 
 
 def request_headers(auth_key: str) -> dict:

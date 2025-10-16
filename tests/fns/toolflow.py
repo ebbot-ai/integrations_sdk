@@ -8,6 +8,8 @@ from challenger_sdk.component import (
 )
 from challenger_sdk.triggers import (
     GetEnvFn,
+    GetSubscriptionsByNameFn,
+    GetSubscriptionsFn,
     TriggerEvents,
     with_triggers,
     workflow_trigger,
@@ -206,22 +208,45 @@ def on_created_fail(dispatch, app: FastAPI, events: TriggerEvents):
     events.on_created(call_me_on_created)
 
 
+class MultiSubOptions(BaseModel):
+    name: str
+
+
+@workflow_trigger(
+    description="",
+    result=HookData,
+    triggerOptions=MultiSubOptions,
+)
+def multisub_trigger(
+    dispatch, app: FastAPI, getEnv: GetEnvFn, getSubscriptions: GetSubscriptionsFn
+):
+    @app.get("/endpoint")
+    def multisub_endpoint():
+        for sub in getSubscriptions():
+            env = getEnv(sub.id)
+            dispatch(sub.id, HookData(messageId=sub.id, message=env.info["name"]))
+
+
 @with_triggers(["hook_trigger", "hook_trigger_own_env_secret"])
-def triggers(dispatch, getEnv: GetEnvFn, app: FastAPI):
+def triggers(
+    dispatch, getEnv: GetEnvFn, app: FastAPI, getSubscriptions: GetSubscriptionsByNameFn
+):
     class Payload(BaseModel):
         type: Literal["hook_trigger", "hook_trigger_secret"]
         messageId: str
         message: str
 
-    @app.post("/multiple-triggers/{subscriptionId}")
-    def shared_fn(subscriptionId, payload: Payload):
+    @app.post("/multiple-triggers")
+    def shared_fn(payload: Payload):
         if payload.type == "hook_trigger":
-            return dispatch(
-                subscriptionId,
-                HookData(messageId=payload.messageId, message=payload.message),
+            for subscription in getSubscriptions("hook_trigger"):
+                return dispatch(
+                    subscription.id,
+                    HookData(messageId=payload.messageId, message=payload.message),
+                )
+        for subscription in getSubscriptions("hook_trigger_own_env_secret"):
+            env = getEnv(subscription.id)
+            dispatch(
+                subscription.id,
+                {"option": env.info["option"], "secret": env.secrets["secret"]},
             )
-        env = getEnv(subscriptionId)
-        dispatch(
-            subscriptionId,
-            {"option": env.info["option"], "secret": env.secrets["secret"]},
-        )
