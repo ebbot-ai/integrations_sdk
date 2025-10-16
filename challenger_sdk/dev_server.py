@@ -12,7 +12,7 @@ from challenger_sdk.workflow import (
     WorkflowStorage,
     NewSubscription,
     Subscription,
-    SubscriptionResult
+    SubscriptionResult,
 )
 
 
@@ -188,7 +188,9 @@ class DevServerWorkflowStorage(WorkflowStorage):
         )
 
     @override
-    def get_subscriptions(self, limit: int = 1000, offset: int = 0, name: str | None = None):
+    def get_subscriptions(
+        self, limit: int = 1000, offset: int = 0, name: str | None = None
+    ):
         cursor = init_dev_db()
         params: list = []
         where = ""

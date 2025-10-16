@@ -10,7 +10,7 @@ from challenger_sdk.workflow import (
     Subscription,
     Vars,
     WorkflowStorage,
-    SubscriptionResult
+    SubscriptionResult,
 )
 
 
@@ -95,8 +95,9 @@ class StorageServerWorkflowStorage(WorkflowStorage):
         )
 
     @override
-    def get_subscriptions(self, limit: int = 1000, offset: int = 0, name: str | None = None):
-
+    def get_subscriptions(
+        self, limit: int = 1000, offset: int = 0, name: str | None = None
+    ):
         params: dict[str, int | str] = {"limit": limit, "offset": offset}
         if name:
             params["name"] = name

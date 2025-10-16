@@ -31,9 +31,11 @@ class Subscription(NewSubscription):
     id: str
     connectionId: str
 
+
 class SubscriptionResult(BaseModel):
     total: int
     data: list[Subscription]
+
 
 class WorkflowStorage(Protocol):
     def save_connection(

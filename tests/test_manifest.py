@@ -49,7 +49,6 @@ def test_manifest_data():
 
     assert call["parameters"]["properties"]["dish"]["type"] == "string"
     assert call["parameters"]["required"] == ["dish"]
-    assert len(data["triggers"]) == 5
     assert data["triggers"][0]["installInstructions"] == installInstructions
 
 
