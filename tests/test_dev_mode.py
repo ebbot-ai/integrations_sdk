@@ -68,3 +68,8 @@ def test_save_subscription():
         },
     )
     assert result.status_code == 201
+
+
+def test_trigger_endpoint_multiple():
+    response = client.get("/endpoint")
+    assert response.status_code == 200
