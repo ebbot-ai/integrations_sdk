@@ -169,7 +169,6 @@ def test_save_subscription_trigger_created():
     assert response_data["options"]["extra_prop"] == "Property prop"
 
 
-
 @responses.activate
 def test_save_subscription_trigger_created_rollback():
     connectionId = mocks.id()
@@ -238,6 +237,7 @@ def test_save_subscription_trigger_env_secrets():
     )
     assert response.status_code == 201
 
+
 @responses.activate
 def test_delete_subscription():
     connectionId = mocks.id()
@@ -248,6 +248,7 @@ def test_delete_subscription():
     )
     assert response.status_code == 204
     assert remove_req.call_count == 1
+
 
 @responses.activate
 def test_delete_subscription_missing():

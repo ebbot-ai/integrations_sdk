@@ -160,7 +160,9 @@ def start_workflow_server(
             install_instructions,
         )
 
-    @app.delete("/connections/{connectionId}/subscriptions/{subscriptionId}", status_code=204)
+    @app.delete(
+        "/connections/{connectionId}/subscriptions/{subscriptionId}", status_code=204
+    )
     def delete_subscription(connectionId: str, subscriptionId: str):
         storage.remove_subscription(connectionId, subscriptionId)
 
