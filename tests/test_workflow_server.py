@@ -239,7 +239,7 @@ def test_save_subscription_trigger_env_secrets():
     assert response.status_code == 201
 
 @responses.activate
-def test_delete_subscription_trigger():
+def test_delete_subscription():
     connectionId = mocks.id()
     subscriptionId = mocks.id()
     remove_req = mocks.delete_subscription(connectionId, subscriptionId)
@@ -249,6 +249,19 @@ def test_delete_subscription_trigger():
     assert response.status_code == 204
     assert remove_req.call_count == 1
 
+@responses.activate
+def test_delete_subscription_missing():
+    connectionId = mocks.id()
+    subscriptionId = mocks.id()
+    remove_req = responses.delete(
+        url=f"http://localhost:9000/connections/{connectionId}/subscriptions/{subscriptionId}",
+        status=404,
+    )
+    response = client.delete(
+        f"connections/{connectionId}/subscriptions/{subscriptionId}",
+    )
+    assert response.status_code == 404
+    assert remove_req.call_count == 1
 
 
 @responses.activate
