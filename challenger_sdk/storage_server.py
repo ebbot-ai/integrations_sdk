@@ -108,6 +108,24 @@ class StorageServerWorkflowStorage(WorkflowStorage):
         )
         return _response_handler(result, SubscriptionResult)
 
+    @override
+    def get_connection_subscriptions(
+        self,
+        connectionId: str,
+        limit: int = 1000,
+        offset: int = 0,
+        name: str | None = None,
+    ) -> SubscriptionResult:
+        params: dict[str, int | str] = {"limit": limit, "offset": offset}
+        if name:
+            params["name"] = name
+        result = requests.get(
+            f"{self.server_url}/connections/{connectionId}/subscriptions",
+            headers=request_headers(self.auth_key),
+            params=params,
+        )
+        return _response_handler(result, SubscriptionResult)
+
 
 def request_headers(auth_key: str) -> dict:
     return {"Authorization": f"Bearer {auth_key}"}

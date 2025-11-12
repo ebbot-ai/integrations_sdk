@@ -57,3 +57,11 @@ class WorkflowStorage(Protocol):
     def get_subscriptions(
         self, limit: int = 1000, offset: int = 0, name: Optional[str] = None
     ) -> SubscriptionResult: ...
+
+    def get_connection_subscriptions(
+        self,
+        connectionId: str,
+        limit: int = 1000,
+        offset: int = 0,
+        name: Optional[str] = None,
+    ) -> SubscriptionResult: ...
