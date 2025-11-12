@@ -158,3 +158,39 @@ def get_subscriptions(
         match=matchers,
         json={"total": total, "data": subscriptions},
     )
+
+
+def get_connection_subscriptions(
+    connectionId: str,
+    subscriptions: list[dict] | None = None,
+    total: int | None = None,
+    name: str | None = None,
+):
+    if subscriptions is None:
+        # provide a default subscription entry
+        subscriptionId = id()
+        subscriptions = [
+            {
+                **default_subscription_data,
+                "id": subscriptionId,
+                "connectionId": connectionId,
+            }
+        ]
+    if total is None:
+        total = len(subscriptions)
+
+    matchers = [responses.matchers.header_matcher({"Authorization": f"Bearer {key}"})]
+    if name is not None:
+        # ensure the request includes the correct 'name' query param when provided
+        matchers.append(
+            responses.matchers.query_param_matcher(
+                {"name": name, "limit": "1000", "offset": "0"}
+            )
+        )
+
+    return responses.get(
+        url=f"http://localhost:9000/connections/{connectionId}/subscriptions",
+        status=200,
+        match=matchers,
+        json={"total": total, "data": subscriptions},
+    )

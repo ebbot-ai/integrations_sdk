@@ -266,6 +266,31 @@ def test_delete_subscription_missing():
 
 
 @responses.activate
+def test_subscription_post_install_instructions():
+    connectionId = mocks.id()
+    subscriptionId = mocks.id()
+    mocks.get_connection(connectionId)
+    mocks.get_connection_subscriptions(
+        connectionId,
+        [
+            {
+                **mocks.default_subscription_data,
+                "name": "post_install_instructions",
+                "id": subscriptionId,
+                "connectionId": connectionId,
+            }
+        ],
+    )
+    response = client.get(f"connections/{connectionId}/subscriptions")
+    assert response.status_code == 200
+    data = response.json()
+    assert (
+        data["data"][0]["postInstallInstructions"]
+        == f"install instructions for subscription subscription {subscriptionId}"
+    )
+
+
+@responses.activate
 def test_trigger_subscription():
     body = {"messageId": "myid", "message": "This is my message"}
     subscriptionId = mocks.id()
