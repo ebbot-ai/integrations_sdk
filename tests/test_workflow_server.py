@@ -266,7 +266,7 @@ def test_delete_subscription_missing():
 
 
 @responses.activate
-def test_subscription_post_install_instructions():
+def test_subscription_get_connection_subscriptions():
     connectionId = mocks.id()
     subscriptionId = mocks.id()
     mocks.get_connection(connectionId)
@@ -278,35 +278,50 @@ def test_subscription_post_install_instructions():
                 "name": "post_install_instructions",
                 "id": subscriptionId,
                 "connectionId": connectionId,
+                "options": { "some": "option" },
+                "secrets": { "some": "secret" }
             }
         ],
     )
     response = client.get(f"connections/{connectionId}/subscriptions")
     assert response.status_code == 200
     data = response.json()
+    assert data["data"][0]["data"]["options"]["some"] == "option"
+    assert "secrets" not in data["data"][0]["data"]
     assert (
         data["data"][0]["postInstallInstructions"]
         == f"install instructions for subscription subscription {subscriptionId}"
     )
 
+@responses.activate
 def test_subscription_get():
     connectionId = mocks.id()
     subscriptionId = mocks.id()
-    mocks.get_connection(connectionId)
     mocks.get_subscription(connectionId, subscriptionId, {
         **mocks.default_subscription_data,
         "name": "post_install_instructions",
         "id": subscriptionId,
         "connectionId": connectionId,
+        "options": { "some": "option" },
+        "secrets": { "some": "secret" }
     })
     response = client.get(f"connections/{connectionId}/subscriptions/{subscriptionId}")
     assert response.status_code == 200
     data = response.json()
+    assert data["data"]["options"]["some"] == "option"
+    assert "secrets" not in data["data"]
     assert (
         data["postInstallInstructions"]
         == f"install instructions for subscription subscription {subscriptionId}"
     )
 
+@responses.activate
+def test_subscription_get_other_404():
+    connectionId = mocks.id()
+    subscriptionId = mocks.id()
+    mocks.get_subscription(connectionId, subscriptionId)
+    response = client.get(f"connections/{mocks.id()}/subscriptions/{subscriptionId}")
+    assert response.status_code == 404
 
 
 @responses.activate
