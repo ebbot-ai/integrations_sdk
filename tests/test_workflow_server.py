@@ -289,6 +289,25 @@ def test_subscription_post_install_instructions():
         == f"install instructions for subscription subscription {subscriptionId}"
     )
 
+def test_subscription_get():
+    connectionId = mocks.id()
+    subscriptionId = mocks.id()
+    mocks.get_connection(connectionId)
+    mocks.get_subscription(connectionId, subscriptionId, {
+        **mocks.default_subscription_data,
+        "name": "post_install_instructions",
+        "id": subscriptionId,
+        "connectionId": connectionId,
+    })
+    response = client.get(f"connections/{connectionId}/subscriptions/{subscriptionId}")
+    assert response.status_code == 200
+    data = response.json()
+    assert (
+        data["postInstallInstructions"]
+        == f"install instructions for subscription subscription {subscriptionId}"
+    )
+
+
 
 @responses.activate
 def test_trigger_subscription():
