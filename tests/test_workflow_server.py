@@ -278,8 +278,8 @@ def test_subscription_get_connection_subscriptions():
                 "name": "post_install_instructions",
                 "id": subscriptionId,
                 "connectionId": connectionId,
-                "options": { "some": "option" },
-                "secrets": { "some": "secret" }
+                "options": {"some": "option"},
+                "secrets": {"some": "secret"},
             }
         ],
     )
@@ -293,18 +293,23 @@ def test_subscription_get_connection_subscriptions():
         == f"install instructions for subscription subscription {subscriptionId}"
     )
 
+
 @responses.activate
 def test_subscription_get():
     connectionId = mocks.id()
     subscriptionId = mocks.id()
-    mocks.get_subscription(connectionId, subscriptionId, {
-        **mocks.default_subscription_data,
-        "name": "post_install_instructions",
-        "id": subscriptionId,
-        "connectionId": connectionId,
-        "options": { "some": "option" },
-        "secrets": { "some": "secret" }
-    })
+    mocks.get_subscription(
+        connectionId,
+        subscriptionId,
+        {
+            **mocks.default_subscription_data,
+            "name": "post_install_instructions",
+            "id": subscriptionId,
+            "connectionId": connectionId,
+            "options": {"some": "option"},
+            "secrets": {"some": "secret"},
+        },
+    )
     response = client.get(f"connections/{connectionId}/subscriptions/{subscriptionId}")
     assert response.status_code == 200
     data = response.json()
@@ -314,6 +319,7 @@ def test_subscription_get():
         data["postInstallInstructions"]
         == f"install instructions for subscription subscription {subscriptionId}"
     )
+
 
 @responses.activate
 def test_subscription_get_other_404():

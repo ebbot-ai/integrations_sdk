@@ -146,8 +146,10 @@ def subscription_endpoint(app: FastAPI, storage: WorkflowStorage, trigger: Trigg
                 raise e
         return saved_subscription
 
+
 class SubscriptionData(BaseModel):
     options: Optional[dict[str, Any]] = None
+
 
 class SubscriptionInfo(Subscription):
     data: SubscriptionData
@@ -179,7 +181,10 @@ def subscription_endpoints(
 
         for subscription in subscriptions.data:
             if subscription.name in triggers:
-                info = SubscriptionInfo(**subscription.__dict__, data=SubscriptionData(options=subscription.options))
+                info = SubscriptionInfo(
+                    **subscription.__dict__,
+                    data=SubscriptionData(options=subscription.options),
+                )
                 trigger = triggers[subscription.name]
                 if trigger.events.post_install_instructions_listener:
                     info.postInstallInstructions = (
@@ -194,17 +199,18 @@ def subscription_endpoints(
     def delete_subscription(connectionId: str, subscriptionId: str):
         storage.remove_subscription(connectionId, subscriptionId)
 
-    @app.get(
-        "/connections/{connectionId}/subscriptions/{subscriptionId}"
-    )
+    @app.get("/connections/{connectionId}/subscriptions/{subscriptionId}")
     def get_subscription(connectionId: str, subscriptionId: str) -> SubscriptionInfo:
         subscription = storage.get_subscription(subscriptionId)
-        if subscription.connectionId != connectionId or subscription.name not in triggers:
-            raise HTTPException(
-                status_code=404
-            )
+        if (
+            subscription.connectionId != connectionId
+            or subscription.name not in triggers
+        ):
+            raise HTTPException(status_code=404)
 
-        info = SubscriptionInfo(**subscription.__dict__, data=SubscriptionData(options=subscription.options))
+        info = SubscriptionInfo(
+            **subscription.__dict__, data=SubscriptionData(options=subscription.options)
+        )
         trigger = triggers[subscription.name]
         if trigger.events.post_install_instructions_listener:
             info.postInstallInstructions = (
