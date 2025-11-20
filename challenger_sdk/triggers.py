@@ -1,7 +1,7 @@
 from dataclasses import dataclass, asdict
 from inspect import signature
 import logging
-from typing import Annotated, Callable, Optional, Union, Type, Any, Generator
+from typing import Annotated, Callable, Optional, Protocol, Union, Type, Any, Generator
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, field_validator
 from requests import request
@@ -28,22 +28,18 @@ GetTriggersEnvFn = Callable[[str, str], FunctionEnv]
 GetSubscriptionsFn = Callable[[], Generator[Subscription, None, None]]
 GetSubscriptionsByNameFn = Callable[[str], Generator[Subscription, None, None]]
 ListenerCallback = Callable[[Subscription], Subscription]
-PostInstallInstructionsCallback = Callable[[Subscription], str]
-
+GetPostInstallEnvFn = Callable[[], FunctionEnv]
+PostInstallInstructionsCallback = Callable[[Subscription, GetPostInstallEnvFn], str]
 
 class TriggerEvents(BaseModel):
     created_listener: Optional[ListenerCallback] = None
     removed_listener: Optional[ListenerCallback] = None
-    post_install_instructions_listener: Optional[PostInstallInstructionsCallback] = None
 
     def on_created(self, fn: ListenerCallback):
         self.created_listener = fn
 
     def on_removed(self, fn: ListenerCallback):
         self.removed_listener = fn
-
-    def post_install_instructions(self, fn: PostInstallInstructionsCallback):
-        self.post_install_instructions_listener = fn
 
 
 class Trigger(BaseModel):
@@ -56,6 +52,7 @@ class Trigger(BaseModel):
     triggerOptionsType: Optional[Type[BaseModel]] = None
     triggerSecretsType: Optional[Type[BaseModel]] = None
     installInstructions: Optional[str] = None
+    postInstallInstructions: Optional[PostInstallInstructionsCallback] = None
     events: TriggerEvents = TriggerEvents()
 
     @field_validator("call", mode="after")
@@ -92,6 +89,7 @@ def workflow_trigger(
     triggerOptions: Optional[Type[BaseModel]] = EmptyOptions,
     triggerSecrets: Optional[Type[BaseModel]] = EmptyOptions,
     installInstructions: Optional[str] = None,
+    postInstallInstructions: Optional[PostInstallInstructionsCallback] = None,
 ):
     def decorator(func: Callable) -> Trigger:
         return Trigger(
@@ -104,6 +102,7 @@ def workflow_trigger(
             triggerOptionsType=triggerOptions,
             triggerSecretsType=triggerSecrets,
             installInstructions=installInstructions,
+            postInstallInstructions=postInstallInstructions,
         )
 
     return decorator
@@ -185,11 +184,14 @@ def subscription_endpoints(
                     **subscription.__dict__,
                     data=SubscriptionData(options=subscription.options),
                 )
+
+                def get_sub_env():
+                    return _get_env(storage, trigger, subscription.id)
+
                 trigger = triggers[subscription.name]
-                if trigger.events.post_install_instructions_listener:
-                    info.postInstallInstructions = (
-                        trigger.events.post_install_instructions_listener(subscription)
-                    )
+                if trigger.postInstallInstructions:
+                    cb = trigger.postInstallInstructions
+                    info.postInstallInstructions = cb(subscription, get_sub_env)
                 filtered.append(info)
         return SubscriptionInfoResult(total=subscriptions.total, data=filtered)
 
@@ -202,6 +204,10 @@ def subscription_endpoints(
     @app.get("/connections/{connectionId}/subscriptions/{subscriptionId}")
     def get_subscription(connectionId: str, subscriptionId: str) -> SubscriptionInfo:
         subscription = storage.get_subscription(subscriptionId)
+
+        def get_sub_env():
+            return _get_env(storage, trigger, subscription.id)
+
         if (
             subscription.connectionId != connectionId
             or subscription.name not in triggers
@@ -212,10 +218,9 @@ def subscription_endpoints(
             **subscription.__dict__, data=SubscriptionData(options=subscription.options)
         )
         trigger = triggers[subscription.name]
-        if trigger.events.post_install_instructions_listener:
-            info.postInstallInstructions = (
-                trigger.events.post_install_instructions_listener(subscription)
-            )
+        if trigger.postInstallInstructions:
+            cb = trigger.postInstallInstructions
+            info.postInstallInstructions = cb(subscription, get_sub_env)
         return info
 
 

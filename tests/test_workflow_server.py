@@ -275,7 +275,7 @@ def test_subscription_get_connection_subscriptions():
         [
             {
                 **mocks.default_subscription_data,
-                "name": "post_install_instructions",
+                "name": "post_install_instructions_trigger",
                 "id": subscriptionId,
                 "connectionId": connectionId,
                 "options": {"some": "option"},
@@ -303,7 +303,7 @@ def test_subscription_get():
         subscriptionId,
         {
             **mocks.default_subscription_data,
-            "name": "post_install_instructions",
+            "name": "post_install_instructions_trigger",
             "id": subscriptionId,
             "connectionId": connectionId,
             "options": {"some": "option"},

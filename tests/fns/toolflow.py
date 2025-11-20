@@ -8,6 +8,7 @@ from challenger_sdk.component import (
 )
 from challenger_sdk.triggers import (
     GetEnvFn,
+    GetPostInstallEnvFn,
     GetSubscriptionsByNameFn,
     GetSubscriptionsFn,
     TriggerEvents,
@@ -208,17 +209,17 @@ def on_created_fail(dispatch, app: FastAPI, events: TriggerEvents):
     events.on_created(call_me_on_created)
 
 
+def post_install_instructions(sub: Subscription, _):
+    return f"install instructions for subscription subscription {sub.id}"
+
 @workflow_trigger(
     description="",
     result=HookData,
     installInstructions=installInstructions,
+    postInstallInstructions=post_install_instructions
 )
-def post_install_instructions(dispatch, events: TriggerEvents):
-    def callback(sub: Subscription):
-        return f"install instructions for subscription subscription {sub.id}"
-
-    events.post_install_instructions(callback)
-
+def post_install_instructions_trigger(dispatch):
+    pass
 
 class MultiSubOptions(BaseModel):
     name: str
