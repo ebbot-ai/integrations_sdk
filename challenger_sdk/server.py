@@ -144,7 +144,7 @@ def start_workflow_server(
 
     if len(triggers) > 0:
         register_triggers(app, storage, storage_server_key, list(triggers.values()))
-        subscription_endpoints(app, storage, list(triggers.values()))
+        subscription_endpoints(app, storage, triggers)
     if len(triggers_handlers.values()) > 0:
         register_triggers_handlers(
             app, storage, storage_server_key, triggers, list(triggers_handlers.values())
@@ -159,11 +159,5 @@ def start_workflow_server(
             secrets,
             install_instructions,
         )
-
-    @app.delete(
-        "/connections/{connectionId}/subscriptions/{subscriptionId}", status_code=204
-    )
-    def delete_subscription(connectionId: str, subscriptionId: str):
-        storage.remove_subscription(connectionId, subscriptionId)
 
     return app

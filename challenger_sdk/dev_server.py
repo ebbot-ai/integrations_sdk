@@ -226,6 +226,49 @@ class DevServerWorkflowStorage(WorkflowStorage):
             subs.append(Subscription(**data))
         return SubscriptionResult(total=total, data=subs)
 
+    @override
+    def get_connection_subscriptions(
+        self,
+        connectionId: str,
+        limit: int = 1000,
+        offset: int = 0,
+        name: str | None = None,
+    ):
+        cursor = init_dev_db()
+        params: list = [connectionId]
+        where = "WHERE connectionId = ?"
+        if name:
+            where += " AND json_extract(data, '$.name') = ?"
+            params.append(name)
+        count_query = f"SELECT COUNT(*) FROM subscriptions {where}".strip()
+        cursor.execute(count_query, tuple(params))
+        total_row = cursor.fetchone()
+        total = total_row[0] if total_row else 0
+        query = f"""
+            SELECT id, connectionId, data, createdAt, updatedAt
+            FROM subscriptions
+            {where}
+            ORDER BY createdAt DESC
+            LIMIT ? OFFSET ?
+        """
+        paginated_params = params + [limit, offset]
+        cursor.execute(query, tuple(paginated_params))
+        rows = cursor.fetchall()
+        cursor.close()
+        subs: list[Subscription] = []
+        for row in rows:
+            data = json.loads(row[2]) if row[2] else {}
+            data.update(
+                {
+                    "id": row[0],
+                    "connectionId": row[1],
+                    "createdAt": row[3],
+                    "updatedAt": row[4],
+                }
+            )
+            subs.append(Subscription(**data))
+        return SubscriptionResult(total=total, data=subs)
+
 
 def connect():
     con = sqlite3.connect("dev.db")
