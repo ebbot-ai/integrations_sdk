@@ -1,7 +1,7 @@
 from dataclasses import dataclass, asdict
 from inspect import signature
 import logging
-from typing import Annotated, Callable, Optional, Protocol, Union, Type, Any, Generator
+from typing import Annotated, Callable, Optional, Union, Type, Any, Generator
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, field_validator
 from requests import request
@@ -30,6 +30,7 @@ GetSubscriptionsByNameFn = Callable[[str], Generator[Subscription, None, None]]
 ListenerCallback = Callable[[Subscription], Subscription]
 GetPostInstallEnvFn = Callable[[], FunctionEnv]
 PostInstallInstructionsCallback = Callable[[Subscription, GetPostInstallEnvFn], str]
+
 
 class TriggerEvents(BaseModel):
     created_listener: Optional[ListenerCallback] = None
