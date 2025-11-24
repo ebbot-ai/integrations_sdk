@@ -34,11 +34,12 @@ class ActionSchema(TypedDict, total=False):
     errors: List[ActionErrorSchema]
 
 
-class ActionDefinition(TypedDict):
+class ActionDefinition(TypedDict, total=False):
     type: Literal["action"]
     name: str
     description: str
     schema: ActionSchema
+    displayName: Optional[str]
 
 
 class TriggerDefinition(TypedDict):
@@ -120,6 +121,7 @@ def actions_from_components(components: list[EbbotComponent]) -> list[ActionDefi
             name=comp.name,
             description=comp.description,
             schema=_action_schema_from_llm_schema(comp),
+            displayName=comp.displayName,
         )
         for comp in components
         if len(comp.ebbot_arguments) == 0

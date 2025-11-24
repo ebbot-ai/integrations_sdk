@@ -29,6 +29,7 @@ class HelloError(BaseModel):
     description="Say hello.",
     result=Result,
     errors=[HelloError, {"type": "string"}],
+    display_name="Say hello",
     arguments={
         "name": {
             "required": True,
