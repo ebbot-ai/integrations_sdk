@@ -31,6 +31,7 @@ class ComponentResponse(BaseModel):
     secrets: list[str]
     env: list[str]
     toolSchema: dict[str, Any]
+    displayName: str | None = None
 
 
 class ToolCallResult(BaseModel):
@@ -118,6 +119,7 @@ def tool_endpoints(app: FastAPI, fns: dict[str, EbbotComponent]):
                         "ebbotArguments": comp.ebbot_arguments,
                         "env": comp.env,
                         "secrets": comp.secrets,
+                        "displayName": comp.displayName,
                     }
                 )
             )

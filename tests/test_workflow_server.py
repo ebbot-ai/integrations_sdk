@@ -91,6 +91,15 @@ def test_action_endpoint():
     assert data["notSecret"] == "asdf"
 
 
+def test_action_manifest():
+    manifest = client.get("/manifest")
+    data = manifest.json()
+    # Assert that action 'say_hello' exists and has displayName 'Say hello'
+    say_hello = next((a for a in data["actions"] if a["name"] == "say_hello"), None)
+    assert say_hello is not None
+    assert say_hello.get("displayName") == "Say hello"
+
+
 @responses.activate
 def test_action_info_endpoint():
     id = mocks.id()
