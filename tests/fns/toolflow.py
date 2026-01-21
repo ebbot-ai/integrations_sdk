@@ -63,6 +63,7 @@ def info(env: FunctionEnv):
     return {
         "word": FieldInfo(
             label="What a label it is",
+            description="A more detailed description",
             options=[
                 (env.info["notSecret"], "Very not secret"),
                 (env.secrets["secret"], "Very secret"),

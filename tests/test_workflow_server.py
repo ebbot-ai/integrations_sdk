@@ -110,6 +110,7 @@ def test_action_info_endpoint():
     assert result.status_code == 200
     data = result.json()
     assert data["word"]["label"] == "What a label it is"
+    assert data["word"]["description"] == "A more detailed description"
     assert data["word"]["options"][0] == ["asdf", "Very not secret"]
     assert data["word"]["options"][1] == ["asdfasdf", "Very secret"]
 
