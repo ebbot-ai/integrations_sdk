@@ -69,6 +69,7 @@ class FieldInfo:
     label: str
     options: Optional[list[tuple[str, str]]] = None
     translations: Optional[dict[str, FieldInfo]] = None
+    description: Optional[str] = None
 
 
 InfoReturnType = dict[str, FieldInfo]
