@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  ai-code:
-    uses: ebbot-ai/ci/.github/workflows/node-ci.yaml@main
+  ai-authored-ratio:
+    uses: ebbot-ai/ci/.github/workflows/ai-authored-ratio.yaml@main
   lint-test:
     runs-on: ubuntu-latest
     strategy:
