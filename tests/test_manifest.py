@@ -22,7 +22,7 @@ app = start_workflow_server(
     Options,
     Secrets,
     install_instructions=installInstructions,
-    docs=docs
+    docs=docs,
 )
 client = TestClient(app)
 
@@ -43,6 +43,7 @@ def test_manifest_data():
         component["description"]
         == "The user wants to tell you about their favorite food."
     )
+    assert "argumentDocs" not in component or component["argumentDocs"] is None
     assert component["schema"]["call"]["type"] == "function"
     call = component["schema"]["call"]["function"]
     assert call["name"] == "store_favorite_food"
@@ -55,7 +56,12 @@ def test_manifest_data():
     assert call["parameters"]["required"] == ["dish"]
     assert data["triggers"][0]["installInstructions"] == installInstructions
     hello_component = get_component(data["actions"], "say_hello")
-    assert hello_component and hello_component["docs"] == "How the say_hello action works"
+    assert (
+        hello_component and hello_component["docs"] == "How the say_hello action works"
+    )
+    assert hello_component["argumentDocs"] == {
+        "name": "The name of the person to greet.",
+    }
     assert data["triggers"][0]["docs"] == "How the hook_trigger trigger works"
 
 

@@ -41,6 +41,7 @@ class ActionDefinition(TypedDict, total=False):
     schema: ActionSchema
     displayName: Optional[str]
     docs: Optional[str]
+    argumentDocs: Optional[Dict[str, str]]
 
 
 class TriggerDefinition(TypedDict):
@@ -74,7 +75,7 @@ def create_manifest(
         actions=actions_from_components(components),
         connection=connection_schema(optionsType, secretsType),
         installInstructions=installInstructions,
-        docs=docs
+        docs=docs,
     )
 
 
@@ -129,6 +130,7 @@ def actions_from_components(components: list[EbbotComponent]) -> list[ActionDefi
             schema=_action_schema_from_llm_schema(comp),
             displayName=comp.displayName,
             docs=comp.docs,
+            argumentDocs=comp.argumentDocs,
         )
         for comp in components
         if len(comp.ebbot_arguments) == 0

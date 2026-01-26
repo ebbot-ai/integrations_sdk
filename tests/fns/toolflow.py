@@ -1,6 +1,6 @@
 from typing import Literal
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from challenger_sdk.component import (
     FunctionEnv,
     workflow_action,
@@ -18,7 +18,7 @@ from challenger_sdk.workflow import Subscription
 
 
 class Result(BaseModel):
-    result: str
+    result: str = Field(description="The end result")
 
 
 class HelloError(BaseModel):
@@ -37,6 +37,9 @@ class HelloError(BaseModel):
             "type": "string",
             "description": "Ask the user about their name. Let the user verify it is correct before proceeding.",
         }
+    },
+    argument_docs={
+        "name": "The name of the person to greet.",
     },
 )
 def say_hello(name: str) -> Result:
