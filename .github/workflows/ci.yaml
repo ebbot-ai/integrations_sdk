@@ -10,6 +10,8 @@ permissions:
   contents: read
 
 jobs:
+  ai-code:
+    uses: ebbot-ai/ci/.github/workflows/node-ci.yaml@main
   lint-test:
     runs-on: ubuntu-latest
     strategy:
