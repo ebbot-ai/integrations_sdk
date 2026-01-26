@@ -30,7 +30,7 @@ class HelloError(BaseModel):
     result=Result,
     errors=[HelloError, {"type": "string"}],
     display_name="Say hello",
-    docs="How the say_hello workflow works",
+    docs="How the say_hello action works",
     arguments={
         "name": {
             "required": True,
@@ -137,7 +137,7 @@ installInstructions = "Docs on point, README magic"
     description="Message received",
     result=HookData,
     installInstructions=installInstructions,
-    docs="How the hook_trigger workflow works",
+    docs="How the hook_trigger trigger works",
 )
 def hook_trigger(dispatch, app: FastAPI):
     @app.post("/hook-trigger/{subscriptionId}")
