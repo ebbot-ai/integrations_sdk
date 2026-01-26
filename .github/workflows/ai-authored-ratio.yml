@@ -1,0 +1,132 @@
+name: AI Authored Ratio
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ai-authored-ratio:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Fetch ai-authored notes
+        run: git fetch origin refs/notes/ai-authored:refs/notes/ai-authored || true
+
+      - name: Compute AI authored ratio
+        id: ai_ratio
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import subprocess
+
+          base_ref = os.environ["BASE_REF"]
+          subprocess.check_call(["git", "fetch", "origin", base_ref])
+          merge_base = subprocess.check_output(
+              ["git", "merge-base", f"origin/{base_ref}", "HEAD"], text=True
+          ).strip()
+          commits = subprocess.check_output(
+              ["git", "rev-list", f"{merge_base}..HEAD"], text=True
+          ).split()
+
+          ai_commits = []
+          for sha in commits:
+              try:
+                  note = subprocess.check_output(
+                      ["git", "notes", "--ref=ai-authored", "show", sha],
+                      text=True,
+                  ).strip()
+              except subprocess.CalledProcessError:
+                  note = ""
+              if note == "AI":
+                  ai_commits.append(sha)
+
+          def sum_numstat(sha_list):
+              additions = 0
+              deletions = 0
+              for sha in sha_list:
+                  output = subprocess.check_output(
+                      ["git", "show", "--numstat", "--format=", sha], text=True
+                  )
+                  for line in output.splitlines():
+                      parts = line.split("\t")
+                      if len(parts) < 3:
+                          continue
+                      add, delete, _path = parts
+                      if add.isdigit():
+                          additions += int(add)
+                      if delete.isdigit():
+                          deletions += int(delete)
+              return additions, deletions
+
+          all_add, all_del = sum_numstat(commits)
+          ai_add, ai_del = sum_numstat(ai_commits)
+
+          all_total = all_add + all_del
+          ai_total = ai_add + ai_del
+          ratio = (ai_total / all_total) if all_total else 0.0
+
+          output_path = os.environ["GITHUB_OUTPUT"]
+          with open(output_path, "a", encoding="utf-8") as handle:
+              handle.write(f"total_commits={len(commits)}\n")
+              handle.write(f"ai_commits={len(ai_commits)}\n")
+              handle.write(f"total_lines_changed={all_total}\n")
+              handle.write(f"ai_lines_changed={ai_total}\n")
+              handle.write(f"ai_ratio={ratio:.2%}\n")
+          PY
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- ai-authored-ratio -->';
+            const ratio = `${{ steps.ai_ratio.outputs.ai_ratio }}`;
+            const aiLines = `${{ steps.ai_ratio.outputs.ai_lines_changed }}`;
+            const totalLines = `${{ steps.ai_ratio.outputs.total_lines_changed }}`;
+            const aiCommits = `${{ steps.ai_ratio.outputs.ai_commits }}`;
+            const totalCommits = `${{ steps.ai_ratio.outputs.total_commits }}`;
+
+            const body = [
+              marker,
+              '## AI Authored Ratio',
+              `- Lines changed by AI: ${aiLines} / ${totalLines} (${ratio})`,
+              `- Commits labeled AI: ${aiCommits} / ${totalCommits}`,
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+            });
+
+            const existing = comments.find(
+              (comment) => comment.user?.type === 'Bot' && comment.body?.includes(marker),
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
