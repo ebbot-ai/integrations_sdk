@@ -51,6 +51,7 @@ def test_manifest_data():
     assert call["parameters"]["required"] == ["dish"]
     assert data["triggers"][0]["installInstructions"] == installInstructions
     assert component["docs"] == "How the store_favorite_food workflow works"
+    assert data["triggers"][0]["docs"] == "How the hook_trigger workflow works"
 
 
 def test_manifest_result_schema():
