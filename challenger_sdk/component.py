@@ -88,6 +88,7 @@ class EbbotComponent(BaseModel):
     errors: list[ResultType] = []
     info: typing.Optional[InfoCallback] = None
     displayName: typing.Optional[str] = None
+    docs: typing.Optional[str] = None
 
     def llm_schema(self):
         properties: dict[str, typing.Any] = {}
@@ -227,6 +228,7 @@ def workflow_action(
     arguments: LLMArguments = {},
     info: typing.Optional[InfoCallback] = None,
     display_name: typing.Optional[str] = None,
+    docs: typing.Optional[str] = None,
 ) -> typing.Callable[[typing.Callable[..., typing.Any]], EbbotComponent]:
     def decorator(func: typing.Callable[..., typing.Any]) -> EbbotComponent:
         return EbbotComponent(
@@ -241,6 +243,7 @@ def workflow_action(
             errors=errors,
             info=info,
             displayName=display_name,
+            docs=docs,
         )
 
     return decorator

@@ -30,6 +30,7 @@ class HelloError(BaseModel):
     result=Result,
     errors=[HelloError, {"type": "string"}],
     display_name="Say hello",
+    docs="How the say_hello workflow works",
     arguments={
         "name": {
             "required": True,

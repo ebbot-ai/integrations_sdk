@@ -40,6 +40,7 @@ class ActionDefinition(TypedDict, total=False):
     description: str
     schema: ActionSchema
     displayName: Optional[str]
+    docs: Optional[str]
 
 
 class TriggerDefinition(TypedDict):
@@ -122,6 +123,7 @@ def actions_from_components(components: list[EbbotComponent]) -> list[ActionDefi
             description=comp.description,
             schema=_action_schema_from_llm_schema(comp),
             displayName=comp.displayName,
+            docs=comp.docs,
         )
         for comp in components
         if len(comp.ebbot_arguments) == 0
