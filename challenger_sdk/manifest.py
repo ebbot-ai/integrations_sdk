@@ -40,6 +40,8 @@ class ActionDefinition(TypedDict, total=False):
     description: str
     schema: ActionSchema
     displayName: Optional[str]
+    docs: Optional[str]
+    argumentDocs: Optional[Dict[str, str]]
 
 
 class TriggerDefinition(TypedDict):
@@ -49,6 +51,7 @@ class TriggerDefinition(TypedDict):
     schema: JSONSchema
     subscriptionSchema: JSONSchema
     installInstructions: Optional[str]
+    docs: Optional[str]
 
 
 class Manifest(TypedDict):
@@ -56,6 +59,7 @@ class Manifest(TypedDict):
     actions: list[ActionDefinition]
     connection: Optional[JSONSchema]
     installInstructions: Optional[str]
+    docs: Optional[str]
 
 
 def create_manifest(
@@ -64,12 +68,14 @@ def create_manifest(
     optionsType: Optional[Type[BaseModel]] = None,
     secretsType: Optional[Type[BaseModel]] = None,
     installInstructions: Optional[str] = None,
+    docs: Optional[str] = None,
 ) -> Manifest:
     return Manifest(
         triggers=trigger_definitions(triggers),
         actions=actions_from_components(components),
         connection=connection_schema(optionsType, secretsType),
         installInstructions=installInstructions,
+        docs=docs,
     )
 
 
@@ -109,6 +115,7 @@ def trigger_definitions(triggers: list[Trigger]):
             schema=_trigger_schema(trigger),
             subscriptionSchema=_trigger_subscription_schema(trigger),
             installInstructions=trigger.installInstructions,
+            docs=trigger.docs,
         )
         for trigger in triggers
     ]
@@ -122,6 +129,8 @@ def actions_from_components(components: list[EbbotComponent]) -> list[ActionDefi
             description=comp.description,
             schema=_action_schema_from_llm_schema(comp),
             displayName=comp.displayName,
+            docs=comp.docs,
+            argumentDocs=comp.argumentDocs,
         )
         for comp in components
         if len(comp.ebbot_arguments) == 0

@@ -118,6 +118,7 @@ def start_workflow_server(
     install_instructions: Optional[str] = None,
     validator: Optional[ConnectionValidator] = None,
     auth_token: Optional[str] = None,
+    docs: Optional[str] = None,
 ):
     if dev_mode:
         storage = DevServerWorkflowStorage()
@@ -158,6 +159,7 @@ def start_workflow_server(
             options,
             secrets,
             install_instructions,
+            docs,
         )
 
     return app
