@@ -4,7 +4,7 @@ import responses
 from pytest import raises
 import json
 import mocks
-from challenger_sdk.server import start_workflow_server
+from integrations_sdk.server import start_workflow_server
 
 
 class Options(BaseModel):

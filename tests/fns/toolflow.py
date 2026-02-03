@@ -1,12 +1,12 @@
 from typing import Literal
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
-from challenger_sdk.component import (
+from integrations_sdk.component import (
     FunctionEnv,
     workflow_action,
     FieldInfo,
 )
-from challenger_sdk.triggers import (
+from integrations_sdk.triggers import (
     GetEnvFn,
     GetSubscriptionsByNameFn,
     GetSubscriptionsFn,
@@ -14,7 +14,7 @@ from challenger_sdk.triggers import (
     with_triggers,
     workflow_trigger,
 )
-from challenger_sdk.workflow import Subscription
+from integrations_sdk.workflow import Subscription
 
 
 class Result(BaseModel):

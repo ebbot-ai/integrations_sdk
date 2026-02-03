@@ -1,5 +1,5 @@
-from challenger_sdk.ebbot import User
-from challenger_sdk.server import start_server
+from integrations_sdk.ebbot import User
+from integrations_sdk.server import start_server
 from fastapi.testclient import TestClient
 
 app = start_server("fns")

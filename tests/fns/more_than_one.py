@@ -1,5 +1,5 @@
-from challenger_sdk.component import ToolResult, component
-from challenger_sdk.ebbot import User
+from integrations_sdk.component import ToolResult, component
+from integrations_sdk.ebbot import User
 from dataclasses import asdict
 
 

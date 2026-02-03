@@ -1,4 +1,4 @@
-from challenger_sdk.component import ToolResult, component
+from integrations_sdk.component import ToolResult, component
 
 
 @component(

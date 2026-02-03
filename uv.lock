@@ -64,39 +64,6 @@ wheels = [
 ]
 
 [[package]]
-name = "challenger-sdk"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "black" },
-    { name = "fastapi", extra = ["standard"] },
-    { name = "httpx" },
-    { name = "jsonschema" },
-    { name = "pyright" },
-    { name = "pytest" },
-    { name = "python-dotenv" },
-    { name = "requests" },
-    { name = "responses" },
-    { name = "ruff" },
-    { name = "typer" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "black", specifier = ">=25.1.0,<26.0.0" },
-    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.12,<0.116.0" },
-    { name = "httpx", specifier = ">=0.28.1,<0.29.0" },
-    { name = "jsonschema", specifier = ">=4.25.1,<5.0.0" },
-    { name = "pyright", specifier = ">=1.1.406" },
-    { name = "pytest", specifier = ">=8.4.0,<9.0.0" },
-    { name = "python-dotenv", specifier = ">=1.1.0,<2.0.0" },
-    { name = "requests", specifier = ">=2.32.4,<3.0.0" },
-    { name = "responses", specifier = ">=0.25.8,<0.26.0" },
-    { name = "ruff", specifier = ">=0.13.3" },
-    { name = "typer", specifier = ">=0.16.0,<0.17.0" },
-]
-
-[[package]]
 name = "charset-normalizer"
 version = "3.4.3"
 source = { registry = "https://pypi.org/simple" }
@@ -300,6 +267,39 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f2/97/ebf4da567aa6827c909642694d71c9fcf53e5b504f2d96afea02718862f3/iniconfig-2.1.0.tar.gz", hash = "sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7", size = 4793, upload-time = "2025-03-19T20:09:59.721Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2c/e1/e6716421ea10d38022b952c159d5161ca1193197fb744506875fbb87ea7b/iniconfig-2.1.0-py3-none-any.whl", hash = "sha256:9deba5723312380e77435581c6bf4935c94cbfab9b1ed33ef8d238ea168eb760", size = 6050, upload-time = "2025-03-19T20:10:01.071Z" },
+]
+
+[[package]]
+name = "integrations-sdk"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "black" },
+    { name = "fastapi", extra = ["standard"] },
+    { name = "httpx" },
+    { name = "jsonschema" },
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "python-dotenv" },
+    { name = "requests" },
+    { name = "responses" },
+    { name = "ruff" },
+    { name = "typer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "black", specifier = ">=25.1.0,<26.0.0" },
+    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.12,<0.116.0" },
+    { name = "httpx", specifier = ">=0.28.1,<0.29.0" },
+    { name = "jsonschema", specifier = ">=4.25.1,<5.0.0" },
+    { name = "pyright", specifier = ">=1.1.406" },
+    { name = "pytest", specifier = ">=8.4.0,<9.0.0" },
+    { name = "python-dotenv", specifier = ">=1.1.0,<2.0.0" },
+    { name = "requests", specifier = ">=2.32.4,<3.0.0" },
+    { name = "responses", specifier = ">=0.25.8,<0.26.0" },
+    { name = "ruff", specifier = ">=0.13.3" },
+    { name = "typer", specifier = ">=0.16.0,<0.17.0" },
 ]
 
 [[package]]
