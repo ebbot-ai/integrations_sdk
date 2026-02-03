@@ -32,5 +32,8 @@ Homepage = "https://github.com/ebbot-ai/challenger-sdk"
 [tool.poetry.scripts]
 integrations = "integrations_sdk.cli:app"
 
-[tool.setuptools]
-packages = ["challenger_sdk", "integrations_sdk"]
+[tool.poetry]
+packages = [
+    { include = "integrations_sdk" },
+    { include = "challenger_sdk" },
+]
