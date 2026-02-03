@@ -1,6 +1,6 @@
 import os
 import pytest
-from challenger_sdk.cli import (
+from integrations_sdk.cli import (
     create_secret,
     create_env,
     set_debug,

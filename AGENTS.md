@@ -41,8 +41,8 @@ BUILD, LINT, TEST
     - runs `uv run ruff check --fix`
 
 - Local dev servers (pattern):
-  - The library exposes FastAPI apps via `start_server` and
-    `start_workflow_server` in `challenger_sdk.server`.
+- The library exposes FastAPI apps via `start_server` and
+  `start_workflow_server` in `integrations_sdk.server`.
   - If you need to run an example app, create a small script that
     imports and starts these, then run it with `uv run python script.py`.
 
@@ -63,8 +63,8 @@ PYTHON STYLE AND CONVENTIONS
 
 - Formatting:
   - Treat Ruff as the source of truth for style and formatting.
-  - Do not hand-wrap lines oddly; follow existing wrapping patterns
-    (e.g. in `challenger_sdk/component.py`, `tools.py`, `triggers.py`).
+- Do not hand-wrap lines oddly; follow existing wrapping patterns
+  (e.g. in `integrations_sdk/component.py`, `tools.py`, `triggers.py`).
   - Use double quotes or single quotes consistently with nearby code;
     do not churn purely for quote style.
 
@@ -99,8 +99,8 @@ PYTHON STYLE AND CONVENTIONS
     raise `HTTPException` with appropriate status codes (e.g. 422,
     404, 500) matching current patterns in `triggers.py` and
     `actions.py`.
-  - For CLI-level failures (e.g. invalid env configuration in
-    `challenger_sdk.cli`), raise `Exception` with a clear, user-facing
+- For CLI-level failures (e.g. invalid env configuration in
+  `integrations_sdk.cli`), raise `Exception` with a clear, user-facing
     message (tests assert on these messages).
   - Use explicit checks and raise early when env or config is missing
     rather than failing later with attribute errors.
@@ -115,16 +115,16 @@ PYTHON STYLE AND CONVENTIONS
 DOMAIN-SPECIFIC PATTERNS
 
 - Components and actions:
-  - Use `EbbotComponent` via the `component` and `workflow_action`
-    decorators in `challenger_sdk.component`.
+- Use `EbbotComponent` via the `component` and `workflow_action`
+  decorators in `integrations_sdk.component`.
   - Ensure `ebbot_arguments` and `llm_arguments` are consistent with
     function signatures; the validator enforces this.
   - Where possible, define result and error schemas using Pydantic
     models so manifest generation stays consistent.
 
 - Triggers and subscriptions:
-  - Use `workflow_trigger` and `with_triggers` from
-    `challenger_sdk.triggers`.
+- Use `workflow_trigger` and `with_triggers` from
+  `integrations_sdk.triggers`.
   - Trigger `call` functions may accept only the allowed parameters
     enforced by validators (`getEnv`, `app`, `dispatch`, `events`,
     `getSubscriptions`). Do not add new names without updating

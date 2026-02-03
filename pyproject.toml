@@ -1,5 +1,5 @@
 [project]
-name = "challenger_sdk"
+name = "integrations_sdk"
 version = "0.1.0"
 description = ""
 authors = [
@@ -30,4 +30,4 @@ Homepage = "https://github.com/ebbot-ai/challenger-sdk"
 "Bug Tracker" = "https://github.com/ebbot-ai/challenger-sdk"
 
 [tool.poetry.scripts]
-challenger = "challenger_sdk.cli:app"
+integrations = "integrations_sdk.cli:app"
