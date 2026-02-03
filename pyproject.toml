@@ -1,5 +1,6 @@
 [project]
 name = "integrations_sdk"
+alias = "challenger_sdk"
 version = "0.1.0"
 description = ""
 authors = [
@@ -9,7 +10,6 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard] (>=0.115.12,<0.116.0)",
-    "black (>=25.1.0,<26.0.0)",
     "python-dotenv (>=1.1.0,<2.0.0)",
     "httpx (>=0.28.1,<0.29.0)",
     "pytest (>=8.4.0,<9.0.0)",
@@ -31,3 +31,6 @@ Homepage = "https://github.com/ebbot-ai/challenger-sdk"
 
 [tool.poetry.scripts]
 integrations = "integrations_sdk.cli:app"
+
+[tool.setuptools]
+packages = ["challenger_sdk", "integrations_sdk"]
