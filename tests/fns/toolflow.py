@@ -45,6 +45,17 @@ class HelloError(BaseModel):
 def say_hello(name: str) -> Result:
     return Result(result=f"Hello {name}")
 
+class HelloArguments(BaseModel):
+    name: str
+
+@workflow_action(
+    description="Say hello pydantic",
+    result=Result,
+    arguments=HelloArguments,
+)
+def say_hello_pydantic(name: str) -> Result:
+    return Result(result=f"Hello {name}")
+
 
 @workflow_action(
     description="Say hello, the good old fashined way",

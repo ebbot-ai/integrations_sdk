@@ -98,6 +98,25 @@ def test_action_manifest():
     say_hello = next((a for a in data["actions"] if a["name"] == "say_hello"), None)
     assert say_hello is not None
     assert say_hello.get("displayName") == "Say hello"
+    # Assert that action 'say_hello_pydantic has a valid schema
+    say_hello_pydantic = next((a for a in data["actions"] if a["name"] == "say_hello_pydantic"), None)
+    assert say_hello_pydantic is not None
+    assert say_hello_pydantic["schema"]["call"]["function"]["parameters"]["properties"]["name"]["type"] == "string"
+
+
+@responses.activate
+def test_action_pydantic_arguments():
+    id = mocks.id()
+    mocks.get_connection(id)
+
+    result = client.post(
+        f"connections/{id}/call/say_hello_pydantic",
+        json={"name": "Test"},
+    )
+    data = result.json()
+    assert result.status_code == 200
+    data = result.json()
+    assert data["result"] == "Hello Test"
 
 
 @responses.activate

@@ -12,7 +12,7 @@ def test_get_components():
     assert response.status_code == 200
     data = response.json()
     retrieve_user = get_component(data, "retrieve_user")
-    assert len(data) == 7
+    assert len(data) == 8
     assert retrieve_user is not None
     assert retrieve_user["ebbotArguments"] == ["user"]
     store_favorite_food = get_component(data, "store_favorite_food")

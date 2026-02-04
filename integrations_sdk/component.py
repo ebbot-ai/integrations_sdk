@@ -50,7 +50,7 @@ class LLMArgument(typing.TypedDict):
     # properties: typing.Optional[str]
 
 
-LLMArguments = dict[str, LLMArgument]
+LLMArguments = dict[str, LLMArgument] | typing.Union[Type[BaseModel], dict]
 
 ResultType = typing.Union[Type[BaseModel], dict]
 
@@ -94,21 +94,23 @@ class EbbotComponent(BaseModel):
     def llm_schema(self):
         properties: dict[str, typing.Any] = {}
         required: list[str] = []
-        for arg_name, arg_schema in self.llm_arguments.items():
-            properties[arg_name] = {
-                "description": arg_schema["description"],
-                "type": arg_schema["type"],
+        if isinstance(self.llm_arguments, type) and issubclass(self.llm_arguments, BaseModel):
+            parameters = self.llm_arguments.model_json_schema()
+        elif isinstance(self.llm_arguments, dict):
+            for arg_name, arg_schema in self.llm_arguments.items():
+                properties[arg_name] = {
+                    "description": arg_schema["description"],
+                    "type": arg_schema["type"],
+                }
+                if arg_schema["required"]:
+                    required.append(arg_name)
+            parameters: dict[str, typing.Any] = {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": properties,
             }
-            if arg_schema["required"]:
-                required.append(arg_name)
-
-        parameters: dict[str, typing.Any] = {
-            "type": "object",
-            "additionalProperties": False,
-            "properties": properties,
-        }
-        if required:
-            parameters["required"] = required
+            if required:
+                parameters["required"] = required
 
         return {
             "type": "function",
@@ -140,9 +142,16 @@ class EbbotComponent(BaseModel):
     @classmethod
     def check_callable_arguments(cls, value: typing.Callable, info):
         sig = inspect.signature(value)
+        llm_arguments = info.data.get("llm_arguments", {})
+        allowed_llm_arguments: dict = {}
+        if isinstance(llm_arguments, type) and issubclass(llm_arguments, BaseModel):
+            allowed_llm_arguments = llm_arguments.model_json_schema()["properties"]
+        elif isinstance(llm_arguments, dict):
+            allowed_llm_arguments = llm_arguments
+
         allowed = (
             set(info.data.get("ebbot_arguments", []))
-            | set(info.data.get("llm_arguments", {}).keys())
+            | set(allowed_llm_arguments)
             | set(["env"])
         )
         for param in sig.parameters.values():
