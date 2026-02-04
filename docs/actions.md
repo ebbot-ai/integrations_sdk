@@ -26,6 +26,8 @@ class Result(BaseModel):
 class HelloError(BaseModel):
     message: str
 
+class HelloArguments(BaseModel):
+    name: str
 
 @workflow_action(
     description="Say hello.",
@@ -33,13 +35,7 @@ class HelloError(BaseModel):
     errors=[HelloError, {"type": "string"}],
     display_name="Say hello",
     docs="How the say_hello action works",
-    arguments={
-        "name": {
-            "required": True,
-            "type": "string",
-            "description": "Ask the user about their name.",
-        }
-    },
+    arguments=HelloArguments,
     argument_docs={
         "name": "The name of the person to greet.",
     },
@@ -69,18 +65,14 @@ values in `env` and `secrets`, and accept a `FunctionEnv` parameter in the funct
 ```python
 from integrations_sdk.component import FunctionEnv, workflow_action
 
+class SecretArtuments(BaseModel):
+    password: string
 
 @workflow_action(
     description="Say hello with secrets and env",
     env=["notSecret"],
     secrets=["secret"],
-    arguments={
-        "password": {
-            "required": True,
-            "type": "string",
-            "description": "The secret password.",
-        }
-    },
+    arguments=SecretArguments
 )
 def say_hello_with_secret_and_env(password: str, env: FunctionEnv) -> dict:
     return {"secret": env.secrets["secret"], "notSecret": env.info["notSecret"]}
@@ -111,18 +103,14 @@ def info(env: FunctionEnv) -> dict:
         )
     }
 
+class WordArguments(BaseModeL):
+    word: string
 
 @workflow_action(
     description="Say one of the selected words",
     env=["notSecret"],
     secrets=["secret"],
-    arguments={
-        "word": {
-            "required": True,
-            "type": "string",
-            "description": "Pick a word.",
-        }
-    },
+    arguments=WordArguments,
     info=info,
 )
 def say_a_word(word: str) -> dict:
