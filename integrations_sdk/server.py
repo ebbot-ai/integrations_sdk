@@ -60,7 +60,9 @@ def _walk_package(package_name: str, type: Type[T]) -> dict[str, T]:
     try:
         pkg = importlib.import_module(package_name)
     except ImportError:
-        logger.warning(f"The {package_name} does not exist. Create the directory and add your actions and triggers there to get started.")
+        logger.warning(
+            f"The {package_name} does not exist. Create the directory and add your actions and triggers there to get started."
+        )
         return {}
 
     # if it's not a package, just list its funcs
@@ -88,7 +90,9 @@ def _walk_package_multiple_trigger_handlers(package_name: str) -> dict[str, Trig
     try:
         pkg = importlib.import_module(package_name)
     except ImportError:
-        logger.warning(f"The {package_name} does not exist. Create the directory and add your actions and triggers there to get started.")
+        logger.warning(
+            f"The {package_name} does not exist. Create the directory and add your actions and triggers there to get started."
+        )
         return {}
 
     def add_triggers(mod):

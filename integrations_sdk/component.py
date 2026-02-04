@@ -94,7 +94,9 @@ class EbbotComponent(BaseModel):
     def llm_schema(self):
         properties: dict[str, typing.Any] = {}
         required: list[str] = []
-        if isinstance(self.llm_arguments, type) and issubclass(self.llm_arguments, BaseModel):
+        if isinstance(self.llm_arguments, type) and issubclass(
+            self.llm_arguments, BaseModel
+        ):
             parameters = self.llm_arguments.model_json_schema()
         elif isinstance(self.llm_arguments, dict):
             for arg_name, arg_schema in self.llm_arguments.items():

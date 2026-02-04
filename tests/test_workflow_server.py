@@ -99,9 +99,16 @@ def test_action_manifest():
     assert say_hello is not None
     assert say_hello.get("displayName") == "Say hello"
     # Assert that action 'say_hello_pydantic has a valid schema
-    say_hello_pydantic = next((a for a in data["actions"] if a["name"] == "say_hello_pydantic"), None)
+    say_hello_pydantic = next(
+        (a for a in data["actions"] if a["name"] == "say_hello_pydantic"), None
+    )
     assert say_hello_pydantic is not None
-    assert say_hello_pydantic["schema"]["call"]["function"]["parameters"]["properties"]["name"]["type"] == "string"
+    assert (
+        say_hello_pydantic["schema"]["call"]["function"]["parameters"]["properties"][
+            "name"
+        ]["type"]
+        == "string"
+    )
 
 
 @responses.activate
