@@ -60,7 +60,7 @@ def say_hello_pydantic(name: str) -> Result:
 
 
 @workflow_action(
-    description="Say hello, the good old fashined way",
+    description="Say hello, the good old fashioned way",
     result=Result.model_json_schema(),
     secrets=["secret"],
     env=["notSecret"],
