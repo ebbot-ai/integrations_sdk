@@ -1,6 +1,6 @@
 ## Installation
 
-We recommend that you use [uv]() when developing with the SDK. UV is a package manager and virtualenv built into one.
+We recommend that you use [uv](https://docs.astral.sh/uv/getting-started/installation/) when developing with the SDK. UV is a package manager and virtualenv built into one.
 
 Start by creating a new project:
 
