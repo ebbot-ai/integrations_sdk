@@ -21,7 +21,7 @@ A workflow server consists of the following concepts:
 The server exposes a REST API that the ebbot platform can interpret.
 This SDK uses [FastAPI](https://fastapi.tiangolo.com/) to spin up that server.
 
-[Read more about the server]()
+[Read more about the server.](/server)
 
 ### Connections
 
@@ -35,6 +35,8 @@ A trigger is something that happens in the system you integrate with. For exampl
 
 Triggers are defined through the SDK.
 
+[Read more about triggers.](/triggers)
+
 ### Subscriptions
 
 A trigger can be subscribed to by a service, for example the Ebbot Automations platform.
@@ -44,6 +46,9 @@ The SDK takes care of notifiying all subscribers when a trigger ins invoked.
 
 An action is something that can be performed by the workflow server. For example,
 it could be creating a ticket, updating an existing ticket or adding a reply.
+
+[Read more about actions.](/actions)
+
 
 ### The manifest
 
