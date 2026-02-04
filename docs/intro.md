@@ -49,7 +49,6 @@ it could be creating a ticket, updating an existing ticket or adding a reply.
 
 [Read more about actions.](/actions)
 
-
 ### The manifest
 
 The manifest describes all available connections, triggers and actions. The

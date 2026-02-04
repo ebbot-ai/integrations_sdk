@@ -32,7 +32,7 @@ app = start_workflow_server(
 ```
 
 Arguments:
-- `module_name`: module path containing workflow actions and triggers (e.g. `"fns"`).
+- `module_name`: module path containing workflow actions and triggers (e.g. `"fns"`). This should be the path of a python module that will be scanned for triggers and actions.
 - `engine_base_url`: base URL for the ebbot workflow engine. You can set this to any url when testing your server.
 - `engine_api_key`: bearer token used when the server calls ebbot workflow engine. You can set this to any value when testing.
 - `Options`/`Secrets`: Pydantic models describing required connection data.
@@ -82,6 +82,33 @@ You can start the server locally by running the python file you created with the
 The workflow server exposes a REST API that is used by the ebbot platform to utilize it.
 You can check the API by navigating to http://localhost:8000/docs
 
+### Setting up your server for production
+
+When hosting your server with ebbot you need to provide a correct engine url and api key. If we take care of hosting
+we will provide those for your server through environment variables. Starting a production server should look like:
+
+```python
+from pydantic import BaseModel
+from integrations_sdk.server import start_workflow_server
+from os import getenv
+
+class Options(BaseModel):
+    notSecret: str
+
+
+class Secrets(BaseModel):
+    secret: str
+
+app = start_workflow_server(
+    "fns",
+    getenv("CONNECTION_SERVER_URL"),
+    getenv("CONNECTION_SERVER_KEY"),
+    Options,
+    Secrets,
+    dev_mode=False
+)
+```
+
 ## What's next?
 
-[Learn more how to work with your server]()
+[Learn more how to develop locally](/developing)
