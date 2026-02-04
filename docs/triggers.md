@@ -12,8 +12,7 @@ the generated manifest.
 
 ## Define a trigger
 
-Triggers register HTTP routes on the FastAPI app and use `dispatch(subscription_id, payload)` to
-send events to the engine.
+Triggers register HTTP routes on the FastAPI app and use `dispatch(subscription_id, payload)` to send events to subscribers.
 
 ```python
 from fastapi import FastAPI
@@ -45,9 +44,7 @@ Key points:
 
 ## Connection env and subscription options
 
-Triggers can read env/secrets from the connection or from the subscription itself. This drives the
-subscription schema in the manifest and ensures the platform collects the right data at install
-time.
+Triggers can read env/secrets from the connection or from the subscription itself. This drives the subscription schema in the manifest and ensures the platform collects the right data at install time.
 
 ### Connection env and secrets
 
@@ -120,8 +117,7 @@ Notes:
 
 ## Trigger lifecycle hooks
 
-Use `TriggerEvents` to run logic when a subscription is created. This is useful for provisioning
-remote webhooks or storing derived configuration.
+Use `TriggerEvents` to run logic when a subscription is created. This is useful for provisioning remote webhooks or storing derived configuration.
 
 ```python
 from integrations_sdk.triggers import TriggerEvents, workflow_trigger
@@ -174,9 +170,7 @@ def triggers(dispatch, getEnv: GetEnvFn, app, getSubscriptions: GetSubscriptions
 
 ## Subscription schemas in the manifest
 
-When you set `connectionEnv` / `connectionSecrets` or `triggerOptions` / `triggerSecrets`, the
-trigger's `subscriptionSchema` is included in the manifest so the engine knows which values are
-required to install the subscription.
+When you set `connectionEnv` / `connectionSecrets` or `triggerOptions` / `triggerSecrets`, the trigger's `subscriptionSchema` is included in the manifest so the ebbot plaform knows which values are required to install the subscription.
 
 ## Runtime behavior
 
