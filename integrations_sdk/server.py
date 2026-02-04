@@ -3,6 +3,7 @@ import importlib
 import pkgutil
 from types import ModuleType
 import typing
+from venv import logger
 from integrations_sdk.actions import action_endpoints
 from integrations_sdk.component import (
     EbbotComponent,
@@ -56,7 +57,11 @@ def _walk_package(package_name: str, type: Type[T]) -> dict[str, T]:
     and collect function and method names.
     """
     collected: dict[str, T] = {}
-    pkg = importlib.import_module(package_name)
+    try:
+        pkg = importlib.import_module(package_name)
+    except ImportError:
+        logger.warn(f"The {package_name} does not exist. Create the directory and add your actions and triggers there to get started.")
+        return {}
 
     # if it's not a package, just list its funcs
     if not hasattr(pkg, "__path__"):
