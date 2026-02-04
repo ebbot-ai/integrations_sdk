@@ -3,13 +3,13 @@
 Actions are the operations your workflow server exposes to the Ebbot platform. They appear in the
 manifest and can be executed at runtime by the Ebbot platform.
 
-## How actions are discovered
+## How Actions Are Discovered
 
 The workflow server scans a module (usually named `fns`) for functions decorated with
 `@workflow_action`. Each decorated function becomes an action that can be used by
 the Ebbot platform.
 
-## Define an action
+## Define an Action
 
 Actions are regular Python functions with a decorator that provides metadata, schemas, and optional
 connection requirements.
@@ -51,13 +51,13 @@ Key points:
 - `result`: Pydantic model or JSON schema returned in the manifest.
 - `errors`: list of error schemas; Pydantic or raw JSON schema dicts.
 
-## Action arguments vs. function signature
+## Action Arguments vs. Function Signature
 
 The SDK validates that `arguments` and the Python function signature match. If you define an
 argument in the decorator, you must accept it in the function signature (and vice versa). This
 validation keeps the manifest consistent with the runtime execution of the action.
 
-## Using connection env and secrets
+## Using Connection Env and Secrets
 
 Actions often need connection-specific values (non-secret config and secrets). Declare required
 values in `env` and `secrets`, and accept a `FunctionEnv` parameter in the function signature.
@@ -82,7 +82,7 @@ Notes:
 - `FunctionEnv.info` holds non-secret connection values.
 - `FunctionEnv.secrets` holds secret values.
 
-## Dynamic field metadata
+## Dynamic Field Metadata
 
 You can provide dynamic, connection-aware field metadata with `info=`. This is helpful for
 populating dropdowns or labels based on the specific connection used.
@@ -119,7 +119,7 @@ def say_a_word(word: str) -> dict:
 
 This information is fetched when rendering the UI for the action, to make it more user-friendly.
 
-## Manifest behavior
+## Manifest Behavior
 
 Every action appears in the manifest with:
 - Its metadata (`description`, `display_name`, `docs`).
@@ -129,7 +129,7 @@ Every action appears in the manifest with:
 The manifest is how the Ebbot platform discovers which actions are available for a server and how
 to call them.
 
-## Runtime execution
+## Runtime Execution
 
 When an action is invoked, the workflow server validates the payload against the declared argument
 schema and then calls the underlying Python function. If the action declares `env`/`secrets`, the

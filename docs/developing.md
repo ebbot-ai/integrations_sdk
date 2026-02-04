@@ -2,7 +2,7 @@
 
 This assumes you already [installed the SDK](/installation) and set [things up for development](/server).
 
-## Set up your connection
+## Set Up Your Connection
 
 You should start with setting up your connection. First, adjust your `Options` and `Secrets` so that
 you collect the necessary information for connecting to the external system you want to integrate with.
@@ -31,7 +31,7 @@ app = start_workflow_server(
 )
 ```
 
-## Test creating your connection
+## Test Creating Your Connection
 
 [Start the server](/server#starting-your-server) and go to http://localhost:8000/docs
 
@@ -43,7 +43,7 @@ Creating a connection is done using the `POST /connections` endpoint:
 
 Store the connection ID you get back and then close the server.
 
-## Adding an action
+## Adding an Action
 
 Let's add an [action](/actions.md) by creating the directory `fns`, then create the file `fns/actions.py` and add the following action:
 
@@ -69,6 +69,6 @@ Restart the server and head to http://localhost:8000/docs again. You will see a 
 
 ![Call action](/images/call_action.png)
 
-## Read more
+## Read More
 
 Check the documentation on [actions](/actions.md) and [triggers](/triggers) to read more.

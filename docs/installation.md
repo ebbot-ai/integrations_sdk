@@ -1,4 +1,4 @@
-## Installation
+# Installation
 
 We recommend that you use [uv](https://docs.astral.sh/uv/getting-started/installation/) when developing with the SDK. uv is a package manager and virtualenv built into one.
 

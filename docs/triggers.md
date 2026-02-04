@@ -4,13 +4,13 @@ Triggers let your workflow server notify the Ebbot platform when something happe
 integrated system. A trigger defines a subscription type in the manifest and registers runtime
 routes that dispatch events to the workflow engine.
 
-## How triggers are discovered
+## How Triggers Are Discovered
 
 The workflow server scans a module (usually named `fns`) for functions decorated with
 `@workflow_trigger` from `integrations_sdk.triggers`. Each decorated function becomes a trigger in
 the generated manifest.
 
-## Define a trigger
+## Define a Trigger
 
 Triggers register HTTP routes on the FastAPI app and use `dispatch(subscription_id, payload)` to send events to subscribers.
 
@@ -42,11 +42,11 @@ Key points:
 - `result` is the Pydantic model or JSON schema for the dispatched payload.
 - The inner FastAPI route is where you parse inbound events and call `dispatch`.
 
-## Connection env and subscription options
+## Connection Env and Subscription Options
 
 Triggers can read env/secrets from the connection or from the subscription itself. This drives the subscription schema in the manifest and ensures the platform collects the right data at install time.
 
-### Connection env and secrets
+### Connection Env and Secrets
 
 ```python
 from pydantic import BaseModel
@@ -74,7 +74,7 @@ def hook_trigger_env_secret(dispatch, app, getEnv: GetEnvFn):
         )
 ```
 
-### Subscription options and secrets
+### Subscription Options and Secrets
 
 ```python
 from pydantic import BaseModel
@@ -115,7 +115,7 @@ Notes:
 - `triggerOptions` / `triggerSecrets` are collected per subscription.
 - `getEnv(subscription_id)` resolves the correct values for that subscription.
 
-## Trigger lifecycle hooks
+## Trigger Lifecycle Hooks
 
 Use `TriggerEvents` to run logic when a subscription is created. This is useful for provisioning remote webhooks or storing derived configuration.
 
@@ -135,7 +135,7 @@ def on_created(dispatch, app, events: TriggerEvents):
 
 If the hook raises an exception, the subscription creation is rolled back.
 
-## Multiple triggers on one endpoint
+## Multiple Triggers on One Endpoint
 
 Use `with_triggers` when several triggers share a route and you want to dispatch by trigger name.
 
@@ -168,11 +168,11 @@ def triggers(dispatch, getEnv: GetEnvFn, app, getSubscriptions: GetSubscriptions
             )
 ```
 
-## Subscription schemas in the manifest
+## Subscription Schemas in the Manifest
 
 When you set `connectionEnv` / `connectionSecrets` or `triggerOptions` / `triggerSecrets`, the trigger's `subscriptionSchema` is included in the manifest so the Ebbot platform knows which values are required to install the subscription.
 
-## Runtime behavior
+## Runtime Behavior
 
 At runtime, the workflow server:
 - Resolves the subscription by ID.

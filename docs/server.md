@@ -3,7 +3,7 @@
 This SDK exposes a workflow server that handles connections, actions, and triggers. The server is built with FastAPI and is created with `start_workflow_server`.
 
 
-## Create the server
+## Create the Server
 
 Add the following to a Python file, for example in the root of your project:
 
@@ -42,7 +42,7 @@ Arguments:
 - `auth_token`: optional server auth; if set, requests must include `Authorization: Bearer <token>`.
 - `dev_mode`: The Ebbot platform takes care of storing options and secrets for you in production. That is not available when testing the server locally, so we provide a dev_mode that stores your information in a local SQLite database. Set this to true when testing your server.
 
-## Setting up the server for development
+## Setting Up the Server for Development
 In this example, actions and triggers that you create will be located in the `fns` folder. Change this to your liking.
 
 When developing and the `engine_base_url` and `engine_api_key` do not matter, you should also set `dev_mode=True` to allow you to store options and secrets locally.
@@ -69,7 +69,7 @@ app = start_workflow_server(
 )
 ```
 
-### Starting the server
+### Starting the Server
 
 You can start the server locally by running the Python file you created with FastAPI. For example, if you named the file `main.py`:
 
@@ -77,12 +77,12 @@ You can start the server locally by running the Python file you created with Fas
 [uv run] fastapi dev endeavour/main.py
 ```
 
-### What the server exposes
+### What the Server Exposes
 
 The workflow server exposes a REST API that the Ebbot platform uses to interact with it.
 You can check the API by navigating to http://localhost:8000/docs
 
-### Setting up your server for production
+### Setting Up Your Server for Production
 
 When hosting your server with Ebbot you need to provide a correct engine URL and API key. If we take care of hosting,
 we will provide those for your server through environment variables. Starting a production server should look like:
@@ -109,6 +109,6 @@ app = start_workflow_server(
 )
 ```
 
-## What's next?
+## What's Next?
 
 [Learn more how to develop locally](/developing)
