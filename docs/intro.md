@@ -3,14 +3,14 @@
 The Ebbot integrations SDK allows you to create integrations for the Ebbot Platform by
 giving you tools to create a **"Workflow server"**.
 
-Workflow servers are the way the Ebbot platform can be extended by exposing **actions** that the ebbot platform should be able to take, and **triggers** that activates the ebbot platform when certain events happen.
+Workflow servers are the way the Ebbot platform can be extended by exposing **actions** that the Ebbot platform can take, and **triggers** that activate the Ebbot platform when certain events happen.
 
 ## What's a workflow server?
 
-A workflow server is an HTTP server that exposes a REST api that the ebbot platform
+A workflow server is an HTTP server that exposes a REST API that the Ebbot platform
 can communicate with. The SDK makes it easy to define such a server.
 
-[Get started setting up the server]()
+[Get started setting up the server](/server)
 
 ## Core concepts
 
@@ -25,13 +25,13 @@ This SDK uses [FastAPI](https://fastapi.tiangolo.com/) to spin up that server.
 
 ### Connections
 
-Integrating with external systems requires settings and credentials to be able to access that system, and the credentials are different for each client. A connection represent a set of credentials that can be used to connect to the system you integrate with.
+Integrating with external systems requires settings and credentials to access that system, and the credentials are different for each client. A connection represents a set of credentials that can be used to connect to the system you integrate with.
 
 A server usually has many connections, one for each client that's using it.
 
 ### Triggers
 
-A trigger is something that happens in the system you integrate with. For example, a trigger could be whenever a new ticket is created, a user logs in etc.
+A trigger is something that happens in the system you integrate with. For example, a trigger could be when a new ticket is created or a user logs in.
 
 Triggers are defined through the SDK.
 
@@ -40,7 +40,7 @@ Triggers are defined through the SDK.
 ### Subscriptions
 
 A trigger can be subscribed to by a service, for example the Ebbot Automations platform.
-The SDK takes care of notifiying all subscribers when a trigger ins invoked.
+The SDK takes care of notifying all subscribers when a trigger is invoked.
 
 ### Actions
 

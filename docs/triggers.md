@@ -170,7 +170,7 @@ def triggers(dispatch, getEnv: GetEnvFn, app, getSubscriptions: GetSubscriptions
 
 ## Subscription schemas in the manifest
 
-When you set `connectionEnv` / `connectionSecrets` or `triggerOptions` / `triggerSecrets`, the trigger's `subscriptionSchema` is included in the manifest so the ebbot plaform knows which values are required to install the subscription.
+When you set `connectionEnv` / `connectionSecrets` or `triggerOptions` / `triggerSecrets`, the trigger's `subscriptionSchema` is included in the manifest so the Ebbot platform knows which values are required to install the subscription.
 
 ## Runtime behavior
 

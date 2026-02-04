@@ -1,6 +1,6 @@
 # Developing your server
 
-This assumes you already [installed the sdk](/installation) and set [things up for development.](/server).
+This assumes you already [installed the SDK](/installation) and set [things up for development](/server).
 
 ## Set up your connection
 
@@ -41,11 +41,11 @@ Creating a connection is done using the `POST /connections` endpoint:
 
 ![Create connection](/images/create_connection.png)
 
-Store the conenction ID you get back and then close the server.
+Store the connection ID you get back and then close the server.
 
 ## Adding an action
 
-Let's add an [action](/actions.md) by creating the directorty "fns" and then create the file `fns/actions.py`, and add the following action:
+Let's add an [action](/actions.md) by creating the directory `fns`, then create the file `fns/actions.py` and add the following action:
 
 ```python
 from pydantic import BaseModel, Field
@@ -65,10 +65,10 @@ def say_hello() -> Result:
     return Result(result=f"Hello world!")
 ```
 
-Restart the server and head to http://localhost:8000/docs again. You will see an new endpoint, `POST /connections/{connection_id/call/say_hello`, go ahead and try it out (with the id of the connection you created in the first step):
+Restart the server and head to http://localhost:8000/docs again. You will see a new endpoint, `POST /connections/{connection_id/call/say_hello`. Go ahead and try it out (with the ID of the connection you created in the first step):
 
 ![Call action](/images/call_action.png)
 
 ## Read more
 
-Check the documentation on [actions](/actions.md) and [triggers](/triggers) to read more
+Check the documentation on [actions](/actions.md) and [triggers](/triggers) to read more.

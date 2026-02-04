@@ -1,13 +1,13 @@
 # Actions
 
 Actions are the operations your workflow server exposes to the Ebbot platform. They appear in the
-manifest and can be executed at runtime by the ebbot platform.
+manifest and can be executed at runtime by the Ebbot platform.
 
 ## How actions are discovered
 
 The workflow server scans a module (usually named `fns`) for functions decorated with
-`@workflow_action` Each decorated function becomes an action that can be used by
-the ebbot platform.
+`@workflow_action`. Each decorated function becomes an action that can be used by
+the Ebbot platform.
 
 ## Define an action
 
@@ -65,14 +65,14 @@ values in `env` and `secrets`, and accept a `FunctionEnv` parameter in the funct
 ```python
 from integrations_sdk.component import FunctionEnv, workflow_action
 
-class SecretArtuments(BaseModel):
-    password: string
+class SecretArguments(BaseModel):
+    password: str
 
 @workflow_action(
     description="Say hello with secrets and env",
     env=["notSecret"],
     secrets=["secret"],
-    arguments=SecretArguments
+    arguments=SecretArguments,
 )
 def say_hello_with_secret_and_env(password: str, env: FunctionEnv) -> dict:
     return {"secret": env.secrets["secret"], "notSecret": env.info["notSecret"]}
@@ -103,8 +103,8 @@ def info(env: FunctionEnv) -> dict:
         )
     }
 
-class WordArguments(BaseModeL):
-    word: string
+class WordArguments(BaseModel):
+    word: str
 
 @workflow_action(
     description="Say one of the selected words",
@@ -117,8 +117,7 @@ def say_a_word(word: str) -> dict:
     return {"result": f"This is the word: {word}"}
 ```
 
-This information is fetched when rendering the UI for the action, to make it more user
-friendly.
+This information is fetched when rendering the UI for the action, to make it more user-friendly.
 
 ## Manifest behavior
 

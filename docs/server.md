@@ -5,7 +5,7 @@ This SDK exposes a workflow server that handles connections, actions, and trigge
 
 ## Create the server
 
-Add the following to a python file, for example in the root of your project:
+Add the following to a Python file, for example in the root of your project:
 
 ```python
 from pydantic import BaseModel
@@ -32,20 +32,20 @@ app = start_workflow_server(
 ```
 
 Arguments:
-- `module_name`: module path containing workflow actions and triggers (e.g. `"fns"`). This should be the path of a python module that will be scanned for triggers and actions.
-- `engine_base_url`: base URL for the ebbot workflow engine. You can set this to any url when testing your server.
-- `engine_api_key`: bearer token used when the server calls ebbot workflow engine. You can set this to any value when testing.
+- `module_name`: module path containing workflow actions and triggers (e.g. `"fns"`). This should be the path of a Python module that will be scanned for triggers and actions.
+- `engine_base_url`: base URL for the Ebbot workflow engine. You can set this to any URL when testing your server.
+- `engine_api_key`: bearer token used when the server calls the Ebbot workflow engine. You can set this to any value when testing.
 - `Options`/`Secrets`: Pydantic models describing required connection data.
 - `validator`: optional function to validate the `Options` and `Secrets` payload.
 - `install_instructions`: This is shown when installing the workflow server. Markdown is allowed.
 - `docs`: Provide documentation for this workflow server. This will be added as a documentation page on the ebbot platform docs. Markdown is allowed.
 - `auth_token`: optional server auth; if set, requests must include `Authorization: Bearer <token>`.
-- `dev_mode`: The ebbot platform takes care of storing options and secrets for you in production. That is not available when testing the server locally, so we provide a dev_mode that stores your information in a local sqlite database. Set this to true when testing your server.
+- `dev_mode`: The Ebbot platform takes care of storing options and secrets for you in production. That is not available when testing the server locally, so we provide a dev_mode that stores your information in a local SQLite database. Set this to true when testing your server.
 
 ## Setting up the server for development
 In this example, actions and triggers that you create will be located in the `fns` folder. Change this to your liking.
 
-When developing and the `engine_base_url` and `engine_api_key` don't matter, you should also set `dev_mode=True` to allow you to store options and secrets locally.
+When developing and the `engine_base_url` and `engine_api_key` do not matter, you should also set `dev_mode=True` to allow you to store options and secrets locally.
 
 ```python
 from pydantic import BaseModel
@@ -71,7 +71,7 @@ app = start_workflow_server(
 
 ### Starting the server
 
-You can start the server locally by running the python file you created with the fastapi. for example, if you named the file `main.py`:
+You can start the server locally by running the Python file you created with FastAPI. For example, if you named the file `main.py`:
 
 ```bash
 [uv run] fastapi dev endeavour/main.py
@@ -79,12 +79,12 @@ You can start the server locally by running the python file you created with the
 
 ### What the server exposes
 
-The workflow server exposes a REST API that is used by the ebbot platform to utilize it.
+The workflow server exposes a REST API that the Ebbot platform uses to interact with it.
 You can check the API by navigating to http://localhost:8000/docs
 
 ### Setting up your server for production
 
-When hosting your server with ebbot you need to provide a correct engine url and api key. If we take care of hosting
+When hosting your server with Ebbot you need to provide a correct engine URL and API key. If we take care of hosting,
 we will provide those for your server through environment variables. Starting a production server should look like:
 
 ```python
