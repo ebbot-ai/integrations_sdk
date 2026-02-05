@@ -98,7 +98,12 @@ def tool_endpoints(app: FastAPI, fns: dict[str, EbbotComponent]):
         @classmethod
         def valid_llm_arguments(cls, value: dict[str, Any], info):
             tool_name = info.data.get("name")
-            allowed = fns[tool_name].llm_arguments
+            llm_arguments = fns[tool_name].llm_arguments
+            allowed = {}
+            if isinstance(llm_arguments, type) and issubclass(llm_arguments, BaseModel):
+                allowed = llm_arguments.model_json_schema()["properties"]
+            elif isinstance(llm_arguments, dict):
+                allowed = llm_arguments
             for arg in value:
                 if arg not in allowed:
                     raise ValueError(
