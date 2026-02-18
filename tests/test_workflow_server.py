@@ -111,6 +111,25 @@ def test_action_manifest():
     )
 
 
+def test_manifest_metadata():
+    metadata_app = start_workflow_server(
+        "fns",
+        "http://localhost:9000",
+        mocks.key,
+        Options,
+        Secrets,
+        email="support@example.com",
+        author="Example Author",
+        url="https://example.com",
+    )
+    metadata_client = TestClient(metadata_app)
+    manifest = metadata_client.get("/manifest")
+    data = manifest.json()
+    assert data.get("email") == "support@example.com"
+    assert data.get("author") == "Example Author"
+    assert data.get("url") == "https://example.com"
+
+
 @responses.activate
 def test_action_pydantic_arguments():
     id = mocks.id()
@@ -377,6 +396,7 @@ def test_trigger_subscription():
     assert res.call_count == 1
 
 
+@responses.activate
 def test_auth_token_required():
     secure_app = start_workflow_server(
         "fns",
@@ -400,6 +420,16 @@ def test_auth_token_required():
     # Correct header
     r = secure_client.get("/manifest", headers={"Authorization": "Bearer supersecret"})
     assert r.status_code == 200
+
+    # Triggers should be accessible without a token.
+    body = {"messageId": "myid", "message": "This is my message"}
+    connectionId = mocks.id()
+    subscriptionId = mocks.id()
+    mocks.get_connection(connectionId)
+    mocks.get_subscription(connectionId, subscriptionId)
+    mocks.engine_callback()
+    trigger = client.post(f"/hook-trigger-env-secret/{subscriptionId}", json=body)
+    assert trigger.status_code == 200
 
 
 @responses.activate

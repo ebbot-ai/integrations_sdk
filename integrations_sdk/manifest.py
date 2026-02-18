@@ -60,6 +60,9 @@ class Manifest(TypedDict):
     connection: Optional[JSONSchema]
     installInstructions: Optional[str]
     docs: Optional[str]
+    email: Optional[str]
+    author: Optional[str]
+    url: Optional[str]
 
 
 def create_manifest(
@@ -69,6 +72,9 @@ def create_manifest(
     secretsType: Optional[Type[BaseModel]] = None,
     installInstructions: Optional[str] = None,
     docs: Optional[str] = None,
+    email: Optional[str] = None,
+    author: Optional[str] = None,
+    url: Optional[str] = None,
 ) -> Manifest:
     return Manifest(
         triggers=trigger_definitions(triggers),
@@ -76,6 +82,9 @@ def create_manifest(
         connection=connection_schema(optionsType, secretsType),
         installInstructions=installInstructions,
         docs=docs,
+        email=email,
+        author=author,
+        url=url,
     )
 
 
