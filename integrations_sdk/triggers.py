@@ -164,7 +164,7 @@ class SubscriptionInfoResult(BaseModel):
     data: list[SubscriptionInfo]
 
 
-class DispatchMetadata(BaseModel):
+class TriggerMetadata(BaseModel):
     referenceId: str
     data: Optional[dict[str, Any]] = None
 
@@ -275,7 +275,7 @@ def _create_dispatch_fn(storage: WorkflowStorage, auth_key: str):
     def dispatch(
         subscription_id: str,
         data,
-        metadata: DispatchMetadata | None = None,
+        metadata: TriggerMetadata | None = None,
     ):
         subscription = storage.get_subscription(subscription_id)
         trigger_data = TriggerData(
