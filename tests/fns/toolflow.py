@@ -7,6 +7,7 @@ from integrations_sdk.component import (
     FieldInfo,
 )
 from integrations_sdk.triggers import (
+    DispatchMetadata,
     GetEnvFn,
     GetSubscriptionsByNameFn,
     GetSubscriptionsFn,
@@ -158,7 +159,11 @@ installInstructions = "Docs on point, README magic"
 def hook_trigger(dispatch, app: FastAPI):
     @app.post("/hook-trigger/{subscriptionId}")
     def hook_trigger(subscriptionId: str, data: HookData):
-        dispatch(subscriptionId, data)
+        metadata = DispatchMetadata(
+            referenceId=data.messageId,
+            data={"message": data.message},
+        )
+        dispatch(subscriptionId, data, metadata)
 
 
 @workflow_trigger(
