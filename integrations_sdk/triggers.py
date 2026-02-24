@@ -164,6 +164,11 @@ class SubscriptionInfoResult(BaseModel):
     data: list[SubscriptionInfo]
 
 
+class DispatchMetadata(BaseModel):
+    referenceId: str
+    data: Optional[dict[str, Any]] = None
+
+
 def subscription_endpoints(
     app: FastAPI, storage: WorkflowStorage, triggers: dict[str, Trigger]
 ):
@@ -248,6 +253,7 @@ class TriggerData:
     connectionId: str
     subscriptionId: str
     payload: dict
+    metadata: Optional[dict[str, Any]] = None
 
 
 def _get_env(storage: WorkflowStorage, trigger: Trigger, subscription_id: str):
@@ -266,7 +272,11 @@ def _get_env(storage: WorkflowStorage, trigger: Trigger, subscription_id: str):
 
 
 def _create_dispatch_fn(storage: WorkflowStorage, auth_key: str):
-    def dispatch(subscription_id: str, data):
+    def dispatch(
+        subscription_id: str,
+        data,
+        metadata: DispatchMetadata | None = None,
+    ):
         subscription = storage.get_subscription(subscription_id)
         trigger_data = TriggerData(
             str(uuid4()),
@@ -274,6 +284,7 @@ def _create_dispatch_fn(storage: WorkflowStorage, auth_key: str):
             subscription.connectionId,
             subscription_id,
             data.model_dump() if isinstance(data, BaseModel) else data,
+            metadata.model_dump() if isinstance(metadata, BaseModel) else metadata,
         )
 
         response = request(
