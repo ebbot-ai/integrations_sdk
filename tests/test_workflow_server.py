@@ -394,6 +394,10 @@ def test_trigger_subscription():
     trigger = client.post(f"/hook-trigger/{subscriptionId}", json=body)
     assert trigger.status_code == 200
     assert res.call_count == 1
+    assert res.calls[0].request.body is not None
+    parsed = json.loads(res.calls[0].request.body)
+    assert parsed["metadata"]["referenceId"] == "myid"
+    assert parsed["metadata"]["data"]["message"] == "This is my message"
 
 
 @responses.activate
