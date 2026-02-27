@@ -20,6 +20,11 @@ def validator(secrets, options):
         raise ValueError("Secret can't be the same as not secret")
 
 
+def connection_post_install_instructions(connection, get_env):
+    env = get_env()
+    return f"post install instructions for {connection.id} {env.secrets['secret']}"
+
+
 app = start_workflow_server(
     "fns", "http://localhost:9000", mocks.key, Options, Secrets, validator=validator
 )
@@ -50,6 +55,37 @@ def test_workflow_server_connection():
     data = response.json()
     get_response = client.get(f"/connections/{data['id']}")
     assert get_response.status_code == 200
+
+
+@responses.activate
+def test_workflow_server_connection_post_install_instructions():
+    id = mocks.id()
+    post_install_app = start_workflow_server(
+        "fns",
+        "http://localhost:9000",
+        mocks.key,
+        Options,
+        Secrets,
+        validator=validator,
+        post_install_instructions=connection_post_install_instructions,
+    )
+    post_install_client = TestClient(post_install_app)
+    mocks.post_connection(id)
+    mocks.get_connection(id)
+    response = post_install_client.post("/connections", json=json_body)
+    assert response.status_code == 201
+    data = response.json()
+    assert (
+        data["postInstallInstructions"]
+        == f"post install instructions for {data['id']} {json_body['secrets']['secret']}"
+    )
+    get_response = post_install_client.get(f"/connections/{data['id']}")
+    assert get_response.status_code == 200
+    get_data = get_response.json()
+    assert (
+        get_data["postInstallInstructions"]
+        == f"post install instructions for {get_data['id']} {json_body['secrets']['secret']}"
+    )
 
 
 @responses.activate
