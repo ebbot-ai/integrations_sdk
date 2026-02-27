@@ -90,6 +90,7 @@ class EbbotComponent(BaseModel):
     displayName: typing.Optional[str] = None
     docs: typing.Optional[str] = None
     argumentDocs: typing.Optional[dict[str, str]] = None
+    type: typing.Optional[typing.Literal["workflow", "endeavour"]] = "workflow"
 
     def llm_schema(self):
         properties: dict[str, typing.Any] = {}
@@ -227,6 +228,7 @@ def component(
             secrets=secrets,
             env=env,
             call=func,
+            type="endeavour"
         )
 
     return decorator

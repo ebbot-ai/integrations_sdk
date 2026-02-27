@@ -141,4 +141,6 @@ def tool_endpoints(app: FastAPI, fns: dict[str, EbbotComponent]):
         logger.info(f"Calling tool {tool.name}")
         raw = component.call(**extra_args, **tool.ebbot_data, **tool.llm_arguments)
         data = raw.model_dump() if isinstance(raw, BaseModel) else raw
-        return ToolCallResult(**data)
+        if component.type == "endeavour":
+            return ToolCallResult(**data)
+        return ToolCallResult(result=data)

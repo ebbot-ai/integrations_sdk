@@ -58,6 +58,16 @@ class HelloArguments(BaseModel):
 def say_hello_pydantic(name: str) -> Result:
     return Result(result=f"Hello {name}")
 
+class WorkflowResult(BaseModel):
+    name: str
+
+@workflow_action(
+    description="Say hello workflow",
+    result=Result,
+    arguments=HelloArguments,
+)
+def say_hello_workflow(name: str) -> WorkflowResult:
+    return WorkflowResult(name=name)
 
 @workflow_action(
     description="Say hello, the good old fashioned way",
