@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from integrations_sdk.connection import (
     ConnectionValidator,
     EmptyOptions,
+    PostInstallInstructionsCallback,
     connection_endpoints,
 )
 from integrations_sdk.dev_server import DevServerWorkflowStorage
@@ -130,6 +131,7 @@ def start_workflow_server(
     dev_mode: bool = False,
     install_instructions: Optional[str] = None,
     validator: Optional[ConnectionValidator] = None,
+    post_install_instructions: Optional[PostInstallInstructionsCallback] = None,
     auth_token: Optional[str] = None,
     docs: Optional[str] = None,
     email: Optional[str] = None,
@@ -156,7 +158,9 @@ def start_workflow_server(
             return await call_next(request)
 
     tool_endpoints(app, fns)
-    connection_endpoints(app, storage, options, secrets, validator)
+    connection_endpoints(
+        app, storage, options, secrets, validator, post_install_instructions
+    )
     action_endpoints(app, storage, list(fns.values()))
 
     if len(triggers) > 0:

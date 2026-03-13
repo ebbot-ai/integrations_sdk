@@ -13,6 +13,8 @@ class EmptyOptions(BaseModel):
 
 
 ConnectionValidator = Callable[[BaseModel, BaseModel], None]
+GetPostInstallEnvFn = Callable[[], FunctionEnv]
+PostInstallInstructionsCallback = Callable[[Connection, GetPostInstallEnvFn], str]
 
 
 def connection_endpoints(
@@ -21,6 +23,7 @@ def connection_endpoints(
     optionsType: Optional[Type[BaseModel]] = EmptyOptions,
     secretsType: Optional[Type[BaseModel]] = EmptyOptions,
     validator: Optional[ConnectionValidator] = None,
+    post_install_instructions: Optional[PostInstallInstructionsCallback] = None,
 ):
     class ServerConnection(BaseModel):
         secrets: Annotated[BaseModel, secretsType]
@@ -37,17 +40,28 @@ def connection_endpoints(
         wfServerId: str
         createdAt: str
         updatedAt: str
+        postInstallInstructions: Optional[str] = None
+
+    def build_result(connection: Connection) -> ResultConnection:
+        data = connection.model_dump()
+        if post_install_instructions:
+            data["postInstallInstructions"] = post_install_instructions(
+                connection, lambda: _get_connection_env(connection)
+            )
+        return ResultConnection(**data)
 
     @app.post("/connections", status_code=201, response_model=ResultConnection)
     def save_connection(connection: ServerConnection):
-        return storage.save_connection(
+        saved_connection = storage.save_connection(
             connection.options.model_dump(),
             connection.secrets.model_dump(),
         )
+        return build_result(saved_connection)
 
     @app.get("/connections/{connectionId}", response_model=ResultConnection)
     def get_connection_endpoint(connectionId: str):
-        return storage.get_connection(connectionId)
+        connection = storage.get_connection(connectionId)
+        return build_result(connection)
 
 
 def function_env_from_connection(env: list[str], secrets: list[str], con: Connection):
@@ -55,6 +69,10 @@ def function_env_from_connection(env: list[str], secrets: list[str], con: Connec
         _pick_env_vars(env, con.options if con.options else {}),
         _pick_env_vars(secrets, con.secrets if con.secrets else {}),
     )
+
+
+def _get_connection_env(con: Connection) -> FunctionEnv:
+    return FunctionEnv(con.options or {}, con.secrets or {})
 
 
 def _pick_env_vars(vars: list[str], env: dict[str, Any]) -> dict[str, str]:
