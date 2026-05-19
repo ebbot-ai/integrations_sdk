@@ -15,6 +15,7 @@ class Secrets(BaseModel):
 
 installInstructions = "Docs on point, README magic"
 docs = "My docs"
+requiredPermissions = "contacts:read messages:write"
 app = start_workflow_server(
     "fns",
     "http://server.com",
@@ -22,6 +23,7 @@ app = start_workflow_server(
     Options,
     Secrets,
     install_instructions=installInstructions,
+    required_permissions=requiredPermissions,
     docs=docs,
 )
 client = TestClient(app)
@@ -34,6 +36,7 @@ def test_manifest_data():
     assert response.status_code == 200
     data = response.json()
     assert data["installInstructions"] == installInstructions
+    assert data["requiredPermissions"] == requiredPermissions
     assert data["docs"] == docs
 
     component = data["actions"][0]

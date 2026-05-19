@@ -154,6 +154,7 @@ def test_manifest_metadata():
         mocks.key,
         Options,
         Secrets,
+        required_permissions="contacts:read",
         email="support@example.com",
         author="Example Author",
         url="https://example.com",
@@ -161,6 +162,7 @@ def test_manifest_metadata():
     metadata_client = TestClient(metadata_app)
     manifest = metadata_client.get("/manifest")
     data = manifest.json()
+    assert data.get("requiredPermissions") == "contacts:read"
     assert data.get("email") == "support@example.com"
     assert data.get("author") == "Example Author"
     assert data.get("url") == "https://example.com"

@@ -59,6 +59,7 @@ class Manifest(TypedDict):
     actions: list[ActionDefinition]
     connection: Optional[JSONSchema]
     installInstructions: Optional[str]
+    requiredPermissions: Optional[str]
     docs: Optional[str]
     email: Optional[str]
     author: Optional[str]
@@ -71,6 +72,7 @@ def create_manifest(
     optionsType: Optional[Type[BaseModel]] = None,
     secretsType: Optional[Type[BaseModel]] = None,
     installInstructions: Optional[str] = None,
+    requiredPermissions: Optional[str] = None,
     docs: Optional[str] = None,
     email: Optional[str] = None,
     author: Optional[str] = None,
@@ -81,6 +83,7 @@ def create_manifest(
         actions=actions_from_components(components),
         connection=connection_schema(optionsType, secretsType),
         installInstructions=installInstructions,
+        requiredPermissions=requiredPermissions,
         docs=docs,
         email=email,
         author=author,
