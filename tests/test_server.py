@@ -87,8 +87,9 @@ def test_call_workflow_action():
     assert response.status_code == 200
     assert response.json() == {
         "actions": None,
-        "result": { "result": f"Hello Spaghetti" }
+        "result": {"result": "Hello Spaghetti"},
     }
+
 
 def test_call_workflow_action_workflow_result():
     response = client.post(
@@ -104,9 +105,8 @@ def test_call_workflow_action_workflow_result():
     assert response.status_code == 200
     assert response.json() == {
         "actions": None,
-        "result": { "name": "Spaghetti" },
+        "result": {"name": "Spaghetti"},
     }
-
 
 
 def get_component(data: list[dict], name: str) -> dict | None:

@@ -228,7 +228,7 @@ def component(
             secrets=secrets,
             env=env,
             call=func,
-            type="endeavour"
+            type="endeavour",
         )
 
     return decorator
