@@ -11,8 +11,6 @@ permissions:
   pull-requests: write
 
 jobs:
-  ai-authored-ratio:
-    uses: ebbot-ai/ci/.github/workflows/ai-authored-ratio.yaml@main
   lint-test:
     runs-on: ubuntu-latest
     strategy:
