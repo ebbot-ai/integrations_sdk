@@ -99,7 +99,7 @@ def subscription_schema(triggers: list[Trigger]):
         triggerName: str
         callback: Callback
 
-    return Subscription.model_json_schema()
+    return _normalized_model_schema(Subscription)
 
 
 def connection_schema(
@@ -108,11 +108,11 @@ def connection_schema(
 ):
     schema = _schema_base()
     schema["properties"]["options"] = (
-        optionsType.model_json_schema() if optionsType else _schema_base()
+        _normalized_model_schema(optionsType) if optionsType else _schema_base()
     )
     schema["required"].append("options")
     schema["properties"]["secrets"] = (
-        secretsType.model_json_schema() if secretsType else _schema_base()
+        _normalized_model_schema(secretsType) if secretsType else _schema_base()
     )
     schema["required"].append("secrets")
     return schema
@@ -151,16 +151,16 @@ def actions_from_components(components: list[EbbotComponent]) -> list[ActionDefi
 
 def _trigger_subscription_schema(trigger: Trigger):
     schema = _schema_base()
-    schema["properties"]["callback"] = Callback.model_json_schema()
+    schema["properties"]["callback"] = _normalized_model_schema(Callback)
     schema["properties"]["data"] = _schema_base()
     schema["properties"]["data"]["required"] = ["options", "secrets"]
     schema["properties"]["data"]["properties"]["options"] = (
-        trigger.triggerOptionsType.model_json_schema()
+        _normalized_model_schema(trigger.triggerOptionsType)
         if trigger.triggerOptionsType
         else _schema_base()
     )
     schema["properties"]["data"]["properties"]["secrets"] = (
-        trigger.triggerSecretsType.model_json_schema()
+        _normalized_model_schema(trigger.triggerSecretsType)
         if trigger.triggerSecretsType
         else _schema_base()
     )
@@ -169,7 +169,7 @@ def _trigger_subscription_schema(trigger: Trigger):
 
 def _trigger_schema(trigger: Trigger):
     payloadSchema = (
-        trigger.result.model_json_schema()
+        _normalized_model_schema(trigger.result)
         if isinstance(trigger.result, type) and issubclass(trigger.result, BaseModel)
         else trigger.result
     )
@@ -180,7 +180,7 @@ def _trigger_schema(trigger: Trigger):
         connectionId: str
         subscriptionId: str
 
-    schema = TriggerSchema.model_json_schema()
+    schema = _normalized_model_schema(TriggerSchema)
     schema["properties"]["payload"] = payloadSchema
     return schema
 
@@ -189,10 +189,55 @@ def _action_schema_from_llm_schema(comp: EbbotComponent):
     schema = comp.llm_schema()
     return ActionSchema(
         call=CallSchema(type="function", function=schema["function"]),
-        result=comp.result_schema(),
-        errors=comp.error_schema(),
+        result=_normalize_json_schema(comp.result_schema()),
+        errors=[_normalize_json_schema(error) for error in comp.error_schema()],
     )
 
 
 def _schema_base():
     return {"type": "object", "properties": {}, "required": []}
+
+
+def _normalized_model_schema(model: Type[BaseModel]) -> JSONSchema:
+    return _normalize_json_schema(model.model_json_schema())
+
+
+def _normalize_json_schema(schema: Any) -> Any:
+    if isinstance(schema, dict):
+        normalized = {
+            key: _normalize_json_schema(value)
+            for key, value in schema.items()
+            if key != "anyOf"
+        }
+        any_of = schema.get("anyOf")
+        if isinstance(any_of, list):
+            non_null_variants = []
+            has_null_variant = False
+            for variant in any_of:
+                normalized_variant = _normalize_json_schema(variant)
+                if _is_null_schema(normalized_variant):
+                    has_null_variant = True
+                else:
+                    non_null_variants.append(normalized_variant)
+
+            if has_null_variant:
+                if len(non_null_variants) == 1:
+                    merged_schema = non_null_variants[0]
+                    if isinstance(merged_schema, dict):
+                        normalized.update(merged_schema)
+                    else:
+                        normalized["anyOf"] = non_null_variants
+                elif len(non_null_variants) > 1:
+                    normalized["anyOf"] = non_null_variants
+            else:
+                normalized["anyOf"] = non_null_variants
+        return normalized
+
+    if isinstance(schema, list):
+        return [_normalize_json_schema(item) for item in schema]
+
+    return schema
+
+
+def _is_null_schema(schema: Any) -> bool:
+    return isinstance(schema, dict) and schema.get("type") == "null"
