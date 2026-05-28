@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
+import logging
 import responses
 from pytest import raises
 import json
@@ -125,6 +126,25 @@ def test_action_endpoint():
     data = result.json()
     assert data["secret"] == "asdfasdf"
     assert data["notSecret"] == "asdf"
+
+
+@responses.activate
+def test_action_endpoint_logs_action_called(caplog):
+    id = mocks.id()
+    mocks.get_connection(id)
+
+    with caplog.at_level(logging.DEBUG):
+        result = client.post(
+            f"connections/{id}/call/say_hello_with_secret_and_env",
+            json={"password": "currywurst"},
+        )
+
+    assert result.status_code == 200
+    assert any(
+        record.name == "integrations_sdk.actions"
+        and "Action called: say_hello_with_secret_and_env" in record.getMessage()
+        for record in caplog.records
+    )
 
 
 def test_action_manifest():
@@ -439,6 +459,24 @@ def test_trigger_subscription():
 
 
 @responses.activate
+def test_trigger_subscription_logs_trigger_called(caplog):
+    body = {"messageId": "myid", "message": "This is my message"}
+    subscriptionId = mocks.id()
+    mocks.get_subscription(mocks.id(), subscriptionId)
+    mocks.engine_callback()
+
+    with caplog.at_level(logging.DEBUG):
+        trigger = client.post(f"/hook-trigger/{subscriptionId}", json=body)
+
+    assert trigger.status_code == 200
+    assert any(
+        record.name == "integrations_sdk.triggers"
+        and "Trigger triggered: hook_trigger" in record.getMessage()
+        for record in caplog.records
+    )
+
+
+@responses.activate
 def test_auth_token_required():
     secure_app = start_workflow_server(
         "fns",
@@ -472,6 +510,30 @@ def test_auth_token_required():
     mocks.engine_callback()
     trigger = client.post(f"/hook-trigger-env-secret/{subscriptionId}", json=body)
     assert trigger.status_code == 200
+
+
+def test_auth_token_logs_failed_requests(caplog):
+    secure_app = start_workflow_server(
+        "fns",
+        "http://localhost:9000",
+        mocks.key,
+        Options,
+        Secrets,
+        validator=validator,
+        auth_token="supersecret",
+    )
+    secure_client = TestClient(secure_app)
+
+    with caplog.at_level(logging.WARNING):
+        response = secure_client.get("/manifest")
+
+    assert response.status_code == 401
+    assert any(
+        record.name == "integrations_sdk.server"
+        and "Authentication failed for GET /manifest" in record.getMessage()
+        and "authorization header missing" in record.getMessage()
+        for record in caplog.records
+    )
 
 
 @responses.activate
