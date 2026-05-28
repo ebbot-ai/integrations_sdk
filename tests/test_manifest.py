@@ -1,7 +1,10 @@
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
+from integrations_sdk.component import workflow_action
+from integrations_sdk.manifest import create_manifest
 from integrations_sdk.server import start_workflow_server
+from integrations_sdk.triggers import workflow_trigger
 from tests.test_server import get_component
 
 
@@ -171,3 +174,83 @@ def test_manifest_trigger_without_options_secrets():
     assert data["triggers"][0]["subscriptionSchema"]["properties"]["data"][
         "required"
     ] == ["options", "secrets"]
+
+
+def test_manifest_optional_fields_are_not_nullable_in_schema():
+    class OptionalOptions(BaseModel):
+        name: str | None = None
+
+    class OptionalSecrets(BaseModel):
+        secret: str | None = None
+
+    class ActionResult(BaseModel):
+        value: str | None = None
+
+    class TriggerPayload(BaseModel):
+        payload_value: str | None = None
+
+    class TriggerOptions(BaseModel):
+        option: str | None = None
+
+    class TriggerSecrets(BaseModel):
+        secret: str | None = None
+
+    @workflow_action(
+        description="Action with optional result field", result=ActionResult
+    )
+    def action_with_optional_result() -> ActionResult:
+        return ActionResult(value=None)
+
+    @workflow_trigger(
+        description="Trigger with optional fields",
+        result=TriggerPayload,
+        triggerOptions=TriggerOptions,
+        triggerSecrets=TriggerSecrets,
+    )
+    def trigger_with_optional_fields(dispatch):
+        return None
+
+    manifest = create_manifest(
+        [action_with_optional_result],
+        [trigger_with_optional_fields],
+        OptionalOptions,
+        OptionalSecrets,
+    )
+
+    connection = manifest["connection"]
+    assert connection is not None
+
+    options_name = connection["properties"]["options"]["properties"]["name"]
+    assert options_name["type"] == "string"
+    assert "anyOf" not in options_name
+
+    secrets_secret = connection["properties"]["secrets"]["properties"]["secret"]
+    assert secrets_secret["type"] == "string"
+    assert "anyOf" not in secrets_secret
+
+    action_schema = manifest["actions"][0].get("schema")
+    assert action_schema is not None
+    action_result = action_schema.get("result")
+    assert action_result is not None
+
+    result_value = action_result["properties"]["value"]
+    assert result_value["type"] == "string"
+    assert "anyOf" not in result_value
+
+    trigger_payload = manifest["triggers"][0]["schema"]["properties"]["payload"][
+        "properties"
+    ]["payload_value"]
+    assert trigger_payload["type"] == "string"
+    assert "anyOf" not in trigger_payload
+
+    subscription_option = manifest["triggers"][0]["subscriptionSchema"]["properties"][
+        "data"
+    ]["properties"]["options"]["properties"]["option"]
+    assert subscription_option["type"] == "string"
+    assert "anyOf" not in subscription_option
+
+    subscription_secret = manifest["triggers"][0]["subscriptionSchema"]["properties"][
+        "data"
+    ]["properties"]["secrets"]["properties"]["secret"]
+    assert subscription_secret["type"] == "string"
+    assert "anyOf" not in subscription_secret
