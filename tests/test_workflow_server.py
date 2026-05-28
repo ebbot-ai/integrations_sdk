@@ -532,9 +532,10 @@ def test_auth_token_logs_failed_requests(caplog):
     assert response.status_code == 401
     assert any(
         record.name == "integrations_sdk.server"
-        and "Authentication failed for GET /manifest" in record.message
-        and "authorization header missing" in record.message
+        and "Authentication failed for GET /manifest" in record.getMessage()
+        and "authorization header missing" in record.getMessage()
         for record in caplog.records
+    )
     )
 
 
