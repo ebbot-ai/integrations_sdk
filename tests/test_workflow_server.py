@@ -472,8 +472,9 @@ def test_trigger_subscription_logs_trigger_called(caplog):
     assert trigger.status_code == 200
     assert any(
         record.name == "integrations_sdk.triggers"
-        and "Trigger triggered: hook_trigger" in record.message
+        and "Trigger triggered: hook_trigger" in record.getMessage()
         for record in caplog.records
+    )
     )
 
 
