@@ -278,13 +278,28 @@ def _create_dispatch_fn(storage: WorkflowStorage, auth_key: str):
         metadata: TriggerMetadata | None = None,
     ):
         subscription = storage.get_subscription(subscription_id)
+        payload = data.model_dump() if isinstance(data, BaseModel) else data
+        metadata_payload = (
+            metadata.model_dump() if isinstance(metadata, BaseModel) else metadata
+        )
+        logger.debug(
+            "Trigger triggered: %s for subscription %s on connection %s",
+            subscription.name,
+            subscription.id,
+            subscription.connectionId,
+            extra={
+                "payload_keys": sorted(payload.keys())
+                if isinstance(payload, dict)
+                else []
+            },
+        )
         trigger_data = TriggerData(
             str(uuid4()),
             subscription.name,
             subscription.connectionId,
             subscription_id,
-            data.model_dump() if isinstance(data, BaseModel) else data,
-            metadata.model_dump() if isinstance(metadata, BaseModel) else metadata,
+            payload,
+            metadata_payload,
         )
 
         response = request(

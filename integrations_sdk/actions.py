@@ -1,3 +1,4 @@
+import logging
 from inspect import signature
 from fastapi import Body, Depends, FastAPI, HTTPException
 
@@ -6,6 +7,9 @@ import jsonschema
 
 from integrations_sdk.connection import function_env_from_connection
 from integrations_sdk.workflow import WorkflowStorage
+
+
+logger = logging.getLogger(__name__)
 
 
 def _single_action_endpoints(
@@ -28,6 +32,12 @@ def _single_action_endpoints(
         },
     )
     def action(connection_id: str, payload: dict = Depends(validate_against_schema)):
+        logger.debug(
+            "Action called: %s for connection %s",
+            fn.name,
+            connection_id,
+            extra={"payload_keys": sorted(payload.keys())},
+        )
         con = storage.get_connection(connection_id)
         sig = signature(fn.call)
         extra_args = {}

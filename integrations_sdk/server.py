@@ -1,9 +1,9 @@
+import logging
 from typing import Optional, Type, TypeVar, Protocol
 import importlib
 import pkgutil
 from types import ModuleType
 import typing
-from venv import logger
 from integrations_sdk.actions import action_endpoints
 from integrations_sdk.component import (
     EbbotComponent,
@@ -29,6 +29,9 @@ from integrations_sdk.triggers import (
     register_triggers_handlers,
     subscription_endpoints,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class HasName(Protocol):
@@ -155,6 +158,13 @@ def start_workflow_server(
             auth_header = request.headers.get("Authorization")
             expected = f"Bearer {auth_token}"
             if auth_header != expected:
+                logger.warning(
+                    "Authentication failed for %s %s from %s: authorization header %s",
+                    request.method,
+                    request.url.path,
+                    request.client.host if request.client else "unknown",
+                    "missing" if auth_header is None else "invalid",
+                )
                 return JSONResponse({"detail": "Unauthorized"}, status_code=401)
             return await call_next(request)
 
