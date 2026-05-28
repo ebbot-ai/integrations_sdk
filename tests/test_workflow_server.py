@@ -145,7 +145,6 @@ def test_action_endpoint_logs_action_called(caplog):
         and "Action called: say_hello_with_secret_and_env" in record.getMessage()
         for record in caplog.records
     )
-    )
 
 
 def test_action_manifest():
@@ -475,7 +474,6 @@ def test_trigger_subscription_logs_trigger_called(caplog):
         and "Trigger triggered: hook_trigger" in record.getMessage()
         for record in caplog.records
     )
-    )
 
 
 @responses.activate
@@ -535,7 +533,6 @@ def test_auth_token_logs_failed_requests(caplog):
         and "Authentication failed for GET /manifest" in record.getMessage()
         and "authorization header missing" in record.getMessage()
         for record in caplog.records
-    )
     )
 
 
