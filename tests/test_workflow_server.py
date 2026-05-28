@@ -142,8 +142,9 @@ def test_action_endpoint_logs_action_called(caplog):
     assert result.status_code == 200
     assert any(
         record.name == "integrations_sdk.actions"
-        and "Action called: say_hello_with_secret_and_env" in record.message
+        and "Action called: say_hello_with_secret_and_env" in record.getMessage()
         for record in caplog.records
+    )
     )
 
 
