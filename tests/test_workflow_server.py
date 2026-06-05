@@ -174,6 +174,7 @@ def test_manifest_metadata():
         mocks.key,
         Options,
         Secrets,
+        api_rate_limit_info="100 requests per minute",
         required_permissions="contacts:read",
         email="support@example.com",
         author="Example Author",
@@ -182,6 +183,7 @@ def test_manifest_metadata():
     metadata_client = TestClient(metadata_app)
     manifest = metadata_client.get("/manifest")
     data = manifest.json()
+    assert data.get("apiRateLimitInfo") == "100 requests per minute"
     assert data.get("requiredPermissions") == "contacts:read"
     assert data.get("email") == "support@example.com"
     assert data.get("author") == "Example Author"
