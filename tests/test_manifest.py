@@ -17,6 +17,7 @@ class Secrets(BaseModel):
 
 
 installInstructions = "Docs on point, README magic"
+apiRateLimitInfo = "100 requests per minute"
 docs = "My docs"
 requiredPermissions = "contacts:read messages:write"
 app = start_workflow_server(
@@ -26,6 +27,7 @@ app = start_workflow_server(
     Options,
     Secrets,
     install_instructions=installInstructions,
+    api_rate_limit_info=apiRateLimitInfo,
     required_permissions=requiredPermissions,
     docs=docs,
 )
@@ -39,6 +41,7 @@ def test_manifest_data():
     assert response.status_code == 200
     data = response.json()
     assert data["installInstructions"] == installInstructions
+    assert data["apiRateLimitInfo"] == apiRateLimitInfo
     assert data["requiredPermissions"] == requiredPermissions
     assert data["docs"] == docs
 
@@ -254,3 +257,12 @@ def test_manifest_optional_fields_are_not_nullable_in_schema():
     ]["properties"]["secrets"]["properties"]["secret"]
     assert subscription_secret["type"] == "string"
     assert "anyOf" not in subscription_secret
+
+
+def test_manifest_api_rate_limit_info():
+    manifest = create_manifest(
+        [], [], installInstructions="Install me", apiRateLimitInfo=apiRateLimitInfo
+    )
+
+    assert manifest["installInstructions"] == "Install me"
+    assert manifest["apiRateLimitInfo"] == apiRateLimitInfo
