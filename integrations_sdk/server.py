@@ -152,10 +152,22 @@ def start_workflow_server(
     triggers_handlers = _walk_package_multiple_trigger_handlers(path)
     app = FastAPI(title=title)
 
+    @app.get("/liveness")
+    def get_liveness():
+        return {"status": "alive"}
+
+    @app.get("/readiness")
+    def get_readiness():
+        # Try to load available subscriptions. This will fail if we have the wrong config.
+        storage.get_subscriptions()
+        return {"status": "ready"}
+
     if auth_token:
 
         @app.middleware("http")
         async def _auth_middleware(request: Request, call_next):
+            if request.url.path in {"/liveness", "/readiness"}:
+                return await call_next(request)
             auth_header = request.headers.get("Authorization")
             expected = f"Bearer {auth_token}"
             if auth_header != expected:

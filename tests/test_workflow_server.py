@@ -33,6 +33,16 @@ client = TestClient(app)
 json_body = {"options": {"notSecret": "asdf"}, "secrets": {"secret": "asdfasdf"}}
 
 
+def test_health_endpoints():
+    liveness_response = client.get("/liveness")
+    assert liveness_response.status_code == 200
+    assert liveness_response.json() == {"status": "alive"}
+
+    readiness_response = client.get("/readiness")
+    assert readiness_response.status_code == 200
+    assert readiness_response.json() == {"status": "ready"}
+
+
 def test_workflow_server_validation():
     response = client.post(
         "/connections",
@@ -536,6 +546,27 @@ def test_auth_token_logs_failed_requests(caplog):
         and "authorization header missing" in record.getMessage()
         for record in caplog.records
     )
+
+
+def test_health_endpoints_bypass_auth_token():
+    secure_app = start_workflow_server(
+        "fns",
+        "http://localhost:9000",
+        mocks.key,
+        Options,
+        Secrets,
+        validator=validator,
+        auth_token="supersecret",
+    )
+    secure_client = TestClient(secure_app)
+
+    liveness_response = secure_client.get("/liveness")
+    assert liveness_response.status_code == 200
+    assert liveness_response.json() == {"status": "alive"}
+
+    readiness_response = secure_client.get("/readiness")
+    assert readiness_response.status_code == 200
+    assert readiness_response.json() == {"status": "ready"}
 
 
 @responses.activate
