@@ -56,6 +56,9 @@ def test_workflow_server_connection():
     data = response.json()
     get_response = client.get(f"/connections/{data['id']}")
     assert get_response.status_code == 200
+    get_data = get_response.json()
+    assert get_data["options"] == json_body["options"]
+    assert "secrets" not in get_data
 
 
 @responses.activate
@@ -83,6 +86,7 @@ def test_workflow_server_connection_post_install_instructions():
     get_response = post_install_client.get(f"/connections/{data['id']}")
     assert get_response.status_code == 200
     get_data = get_response.json()
+    assert "secrets" not in get_data
     assert (
         get_data["postInstallInstructions"]
         == f"post install instructions for {get_data['id']} {json_body['secrets']['secret']}"

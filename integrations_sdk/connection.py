@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Optional, Type, Callable
+from typing import Annotated, Any, Callable, Optional, Type
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ValidationError, model_validator
 from integrations_sdk.component import FunctionEnv
@@ -43,6 +43,14 @@ def connection_endpoints(
         updatedAt: str
         postInstallInstructions: Optional[str] = None
 
+    class GetResultConnection(BaseModel):
+        id: str
+        wfServerId: str
+        options: Annotated[BaseModel, optionsType]
+        createdAt: str
+        updatedAt: str
+        postInstallInstructions: Optional[str] = None
+
     def build_result(connection: Connection) -> ResultConnection:
         data = connection.model_dump()
         if post_install_instructions:
@@ -50,6 +58,14 @@ def connection_endpoints(
                 connection, lambda: _get_connection_env(connection)
             )
         return ResultConnection(**data)
+
+    def build_get_result(connection: Connection) -> GetResultConnection:
+        data = connection.model_dump(exclude={"secrets"})
+        if post_install_instructions:
+            data["postInstallInstructions"] = post_install_instructions(
+                connection, lambda: _get_connection_env(connection)
+            )
+        return GetResultConnection(**data)
 
     @app.post("/connections", status_code=201, response_model=ResultConnection)
     def save_connection(connection: ServerConnection):
@@ -59,11 +75,11 @@ def connection_endpoints(
         )
         return build_result(saved_connection)
 
-    @app.get("/connections/{connectionId}", response_model=ResultConnection)
+    @app.get("/connections/{connectionId}", response_model=GetResultConnection)
     def get_connection_endpoint(connectionId: str):
         try:
             connection = storage.get_connection(connectionId)
-            return build_result(connection)
+            return build_get_result(connection)
         except ValidationError as e:
             raise SafeValidationError(e) from None
 
