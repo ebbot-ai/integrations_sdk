@@ -1,7 +1,8 @@
 from typing import Annotated, Any, Optional, Type, Callable
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, ValidationError, model_validator
 from integrations_sdk.component import FunctionEnv
+from integrations_sdk.errors import SafeValidationError
 from integrations_sdk.workflow import Connection, WorkflowStorage
 
 
@@ -60,8 +61,11 @@ def connection_endpoints(
 
     @app.get("/connections/{connectionId}", response_model=ResultConnection)
     def get_connection_endpoint(connectionId: str):
-        connection = storage.get_connection(connectionId)
-        return build_result(connection)
+        try:
+            connection = storage.get_connection(connectionId)
+            return build_result(connection)
+        except ValidationError as e:
+            raise SafeValidationError(e) from None
 
 
 def function_env_from_connection(env: list[str], secrets: list[str], con: Connection):
