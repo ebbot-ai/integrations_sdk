@@ -569,6 +569,56 @@ def test_health_endpoints_bypass_auth_token():
     assert readiness_response.json() == {"status": "ready"}
 
 
+def test_request_logging_uses_debug_for_health_endpoints(caplog):
+    with caplog.at_level(logging.DEBUG):
+        response = client.get("/liveness")
+
+    assert response.status_code == 200
+    assert any(
+        record.name == "integrations_sdk.server"
+        and record.levelno == logging.DEBUG
+        and "Request GET /liveness -> 200" in record.getMessage()
+        for record in caplog.records
+    )
+
+
+def test_request_logging_uses_info_for_other_endpoints(caplog):
+    with caplog.at_level(logging.INFO):
+        response = client.get("/manifest")
+
+    assert response.status_code == 200
+    assert any(
+        record.name == "integrations_sdk.server"
+        and record.levelno == logging.INFO
+        and "Request GET /manifest -> 200" in record.getMessage()
+        for record in caplog.records
+    )
+
+
+def test_request_logging_includes_auth_rejections(caplog):
+    secure_app = start_workflow_server(
+        "fns",
+        "http://localhost:9000",
+        mocks.key,
+        Options,
+        Secrets,
+        validator=validator,
+        auth_token="supersecret",
+    )
+    secure_client = TestClient(secure_app)
+
+    with caplog.at_level(logging.INFO):
+        response = secure_client.get("/manifest")
+
+    assert response.status_code == 401
+    assert any(
+        record.name == "integrations_sdk.server"
+        and record.levelno == logging.INFO
+        and "Request GET /manifest -> 401" in record.getMessage()
+        for record in caplog.records
+    )
+
+
 @responses.activate
 def test_trigger_subscription_env():
     body = {"messageId": "myid", "message": "This is my message"}

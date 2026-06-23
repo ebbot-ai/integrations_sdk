@@ -1,17 +1,18 @@
 import logging
-from typing import Optional, Type, TypeVar, Protocol
 import importlib
 import pkgutil
 from types import ModuleType
 import typing
-from integrations_sdk.actions import action_endpoints
-from integrations_sdk.component import (
-    EbbotComponent,
-)
+from typing import Optional, Protocol, Type, TypeVar
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from integrations_sdk.actions import action_endpoints
+from integrations_sdk.component import (
+    EbbotComponent,
+)
 from integrations_sdk.connection import (
     ConnectionValidator,
     EmptyOptions,
@@ -30,8 +31,9 @@ from integrations_sdk.triggers import (
     subscription_endpoints,
 )
 
-
 logger = logging.getLogger(__name__)
+
+HEALTH_ENDPOINTS = {"/liveness", "/readiness"}
 
 
 class HasName(Protocol):
@@ -116,9 +118,28 @@ def _walk_package_multiple_trigger_handlers(package_name: str) -> dict[str, Trig
     return collected
 
 
+def _register_request_logging_middleware(app: FastAPI) -> None:
+    @app.middleware("http")
+    async def _request_logging_middleware(request: Request, call_next):
+        log = logger.debug if request.url.path in HEALTH_ENDPOINTS else logger.info
+        try:
+            response = await call_next(request)
+        except Exception:
+            log("%s %s -> error", request.method, request.url.path)
+            raise
+        log(
+            "%s %s -> %s",
+            request.method,
+            request.url.path,
+            response.status_code,
+        )
+        return response
+
+
 def start_server(path, title="Challenger sdk server"):
     fns = _walk_package(path, EbbotComponent)
     app = FastAPI(title=title)
+    _register_request_logging_middleware(app)
     tool_endpoints(app, fns)
 
     return app
@@ -166,7 +187,7 @@ def start_workflow_server(
 
         @app.middleware("http")
         async def _auth_middleware(request: Request, call_next):
-            if request.url.path in {"/liveness", "/readiness"}:
+            if request.url.path in HEALTH_ENDPOINTS:
                 return await call_next(request)
             auth_header = request.headers.get("Authorization")
             expected = f"Bearer {auth_token}"
@@ -180,6 +201,8 @@ def start_workflow_server(
                 )
                 return JSONResponse({"detail": "Unauthorized"}, status_code=401)
             return await call_next(request)
+
+    _register_request_logging_middleware(app)
 
     tool_endpoints(app, fns)
     connection_endpoints(
