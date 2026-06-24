@@ -3,7 +3,7 @@ from inspect import signature
 import logging
 from typing import Annotated, Callable, Optional, Union, Type, Any, Generator
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ValidationError, field_validator
 from requests import request
 from uuid import uuid4
 
@@ -12,6 +12,7 @@ from integrations_sdk.connection import (
     EmptyOptions,
     function_env_from_connection,
 )
+from integrations_sdk.errors import SafeValidationError
 from integrations_sdk.storage_server import request_headers
 from integrations_sdk.workflow import (
     Callback,
@@ -257,18 +258,21 @@ class TriggerData:
 
 
 def _get_env(storage: WorkflowStorage, trigger: Trigger, subscription_id: str):
-    subscription = storage.get_subscription(subscription_id)
-    connection = storage.get_connection(subscription.connectionId)
-    function_env = function_env_from_connection(
-        trigger.env, trigger.secrets, connection
-    )
-    if trigger.triggerOptionsType:
-        options = trigger.triggerOptionsType(**subscription.options or {})
-        function_env.info.update(options.model_dump())
-    if trigger.triggerSecretsType:
-        secrets = trigger.triggerSecretsType(**subscription.secrets or {})
-        function_env.secrets.update(secrets.model_dump())
-    return function_env
+    try:
+        subscription = storage.get_subscription(subscription_id)
+        connection = storage.get_connection(subscription.connectionId)
+        function_env = function_env_from_connection(
+            trigger.env, trigger.secrets, connection
+        )
+        if trigger.triggerOptionsType:
+            options = trigger.triggerOptionsType(**subscription.options or {})
+            function_env.info.update(options.model_dump())
+        if trigger.triggerSecretsType:
+            secrets = trigger.triggerSecretsType(**subscription.secrets or {})
+            function_env.secrets.update(secrets.model_dump())
+        return function_env
+    except ValidationError as e:
+        raise SafeValidationError(e) from None
 
 
 def _create_dispatch_fn(storage: WorkflowStorage, auth_key: str):

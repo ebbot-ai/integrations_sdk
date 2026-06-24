@@ -56,6 +56,9 @@ def test_workflow_server_connection():
     data = response.json()
     get_response = client.get(f"/connections/{data['id']}")
     assert get_response.status_code == 200
+    get_data = get_response.json()
+    assert get_data["options"] == json_body["options"]
+    assert "secrets" not in get_data
 
 
 @responses.activate
@@ -83,6 +86,7 @@ def test_workflow_server_connection_post_install_instructions():
     get_response = post_install_client.get(f"/connections/{data['id']}")
     assert get_response.status_code == 200
     get_data = get_response.json()
+    assert "secrets" not in get_data
     assert (
         get_data["postInstallInstructions"]
         == f"post install instructions for {get_data['id']} {json_body['secrets']['secret']}"
@@ -111,6 +115,35 @@ def test_workflow_server_connection_validation():
     mocks.get_connection(id)
     response = client.post("/connections", json=invalid_body)
     assert response.status_code == 422
+
+
+@responses.activate
+def test_get_connection_validation_error_omits_input_data():
+    connection_id = mocks.id()
+    responses.get(
+        url=f"http://localhost:9000/connections/{connection_id}",
+        status=201,
+        match=[
+            responses.matchers.header_matcher({"Authorization": f"Bearer {mocks.key}"}),
+        ],
+        json={
+            "id": connection_id,
+            "wfServerId": mocks.wf_server_id,
+            "createdAt": mocks.now(),
+            "updatedAt": mocks.now(),
+            "options": {"notSecrett": "asdf"},
+            "secrets": {"secret": "asdfasdf"},
+        },
+    )
+
+    with raises(Exception, match="Field required") as exc:
+        client.get(f"/connections/{connection_id}")
+
+    message = str(exc.value)
+    assert "Field required" in message
+    assert "'input'" not in message
+    assert "notSecrett" not in message
+    assert "asdfasdf" not in message
 
 
 @responses.activate
@@ -443,6 +476,32 @@ def test_subscription_get_other_404():
     mocks.get_subscription(connectionId, subscriptionId)
     response = client.get(f"connections/{mocks.id()}/subscriptions/{subscriptionId}")
     assert response.status_code == 404
+
+
+@responses.activate
+def test_trigger_get_env_validation_error_omits_input_data():
+    connectionId = mocks.id()
+    subscriptionId = mocks.id()
+    mocks.get_connection(connectionId)
+    mocks.get_subscription(
+        connectionId,
+        subscriptionId,
+        {
+            **mocks.default_subscription_data,
+            "name": "hook_trigger_own_env_secret",
+            "options": {"wrong_option": "test"},
+            "secrets": {"secret": "super-secret"},
+        },
+    )
+
+    with raises(Exception, match="Field required") as exc:
+        client.post(f"/hook-trigger-own-env/{subscriptionId}")
+
+    message = str(exc.value)
+    assert "Field required" in message
+    assert "'input'" not in message
+    assert "wrong_option" not in message
+    assert "super-secret" not in message
 
 
 @responses.activate

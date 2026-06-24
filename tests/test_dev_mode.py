@@ -27,6 +27,9 @@ def test_create_connection():
     data = response.json()
     get_response = client.get(f"/connections/{data['id']}")
     assert get_response.status_code == 200
+    get_data = get_response.json()
+    assert get_data["options"] == json_body["options"]
+    assert "secrets" not in get_data
 
 
 def test_action_endpoint():
