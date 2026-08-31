@@ -33,6 +33,18 @@ client = TestClient(app)
 json_body = {"options": {"notSecret": "asdf"}, "secrets": {"secret": "asdfasdf"}}
 
 
+@responses.activate
+def test_health_endpoints():
+    liveness_response = client.get("/liveness")
+    assert liveness_response.status_code == 200
+    assert liveness_response.json() == {"status": "alive"}
+
+    mocks.get_subscriptions()
+    readiness_response = client.get("/readiness")
+    assert readiness_response.status_code == 200
+    assert readiness_response.json() == {"status": "ready"}
+
+
 def test_workflow_server_validation():
     response = client.post(
         "/connections",
@@ -593,6 +605,79 @@ def test_auth_token_logs_failed_requests(caplog):
         record.name == "integrations_sdk.server"
         and "Authentication failed for GET /manifest" in record.getMessage()
         and "authorization header missing" in record.getMessage()
+        for record in caplog.records
+    )
+
+
+@responses.activate
+def test_health_endpoints_bypass_auth_token():
+    secure_app = start_workflow_server(
+        "fns",
+        "http://localhost:9000",
+        mocks.key,
+        Options,
+        Secrets,
+        validator=validator,
+        auth_token="supersecret",
+    )
+    secure_client = TestClient(secure_app)
+
+    liveness_response = secure_client.get("/liveness")
+    assert liveness_response.status_code == 200
+    assert liveness_response.json() == {"status": "alive"}
+
+    mocks.get_subscriptions()
+    readiness_response = secure_client.get("/readiness")
+    assert readiness_response.status_code == 200
+    assert readiness_response.json() == {"status": "ready"}
+
+
+def test_request_logging_uses_debug_for_health_endpoints(caplog):
+    with caplog.at_level(logging.DEBUG):
+        response = client.get("/liveness")
+
+    assert response.status_code == 200
+    assert any(
+        record.name == "integrations_sdk.server"
+        and record.levelno == logging.DEBUG
+        and "GET /liveness -> 200" in record.getMessage()
+        for record in caplog.records
+    )
+
+
+def test_request_logging_uses_info_for_other_endpoints(caplog):
+    with caplog.at_level(logging.INFO):
+        response = client.get("/manifest")
+
+    assert response.status_code == 200
+    assert any(
+        record.name == "integrations_sdk.server"
+        and record.levelno == logging.INFO
+        and "GET /manifest -> 200" in record.getMessage()
+        for record in caplog.records
+    )
+
+
+def test_request_logging_includes_auth_rejections(caplog):
+    secure_app = start_workflow_server(
+        "fns",
+        "http://localhost:9000",
+        mocks.key,
+        Options,
+        Secrets,
+        validator=validator,
+        auth_token="supersecret",
+    )
+    secure_client = TestClient(secure_app)
+
+    with caplog.at_level(logging.INFO):
+        response = secure_client.get("/manifest")
+
+    assert response.status_code == 401
+    assert any(
+        record.name == "integrations_sdk.server"
+        and record.levelno == logging.INFO
+        and "GET /manifest -> 401" in record.getMessage()
         for record in caplog.records
     )
 
