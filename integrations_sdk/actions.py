@@ -1,8 +1,10 @@
 import logging
 from inspect import signature
+from typing import Any, Callable, cast
+
 from fastapi import Body, Depends, FastAPI, HTTPException
 
-from integrations_sdk.component import EbbotComponent
+from integrations_sdk.component import EbbotComponent, InfoReturnType
 import jsonschema
 
 from integrations_sdk.connection import function_env_from_connection
@@ -48,12 +50,25 @@ def _single_action_endpoints(
 
     if fn.info:
 
-        @app.get("/connections/{connection_id}/form/" + fn.name)
-        def info(connection_id):
+        def form_info(connection_id: str, selected: dict[str, Any]):
             con = storage.get_connection(connection_id)
             if fn.info:
-                return fn.info(function_env_from_connection(fn.env, fn.secrets, con))
+                env = function_env_from_connection(fn.env, fn.secrets, con)
+                info_callback = cast(Callable[..., InfoReturnType], fn.info)
+                if len(signature(info_callback).parameters) > 1:
+                    return info_callback(env, selected)
+                return info_callback(env)
             return None
+
+        @app.get("/connections/{connection_id}/form/" + fn.name)
+        def info(connection_id: str):
+            return form_info(connection_id, {})
+
+        @app.post("/connections/{connection_id}/form/" + fn.name)
+        def info_with_selected_values(
+            connection_id: str, selected: dict[str, Any] = Body(embed=True)
+        ):
+            return form_info(connection_id, selected)
 
 
 def action_endpoints(app: FastAPI, storage: WorkflowStorage, fns: list[EbbotComponent]):
