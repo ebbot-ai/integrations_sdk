@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from integrations_sdk.component import (
@@ -119,6 +119,37 @@ def info(env: FunctionEnv):
 )
 def say_a_word(word: str) -> dict:
     return Result(result=f"This is the word: {word}").model_dump()
+
+
+def cascading_info(env: FunctionEnv, selected: dict[str, Any]):
+    return {
+        "lesson": FieldInfo(
+            label="Lesson",
+            options=[(selected.get("module", ""), "Selected module")],
+            depends_on=["module"],
+        )
+    }
+
+
+@workflow_action(
+    description="Select a lesson from a module",
+    result=Result.model_json_schema(),
+    arguments={
+        "module": {
+            "required": True,
+            "type": "string",
+            "description": "The selected module.",
+        },
+        "lesson": {
+            "required": True,
+            "type": "string",
+            "description": "The selected lesson.",
+        },
+    },
+    info=cascading_info,
+)
+def select_lesson(module: str, lesson: str) -> dict:
+    return Result(result=f"Selected {module}: {lesson}").model_dump()
 
 
 class SecretEnvironmentPollution(BaseModel):

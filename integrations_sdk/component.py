@@ -70,10 +70,14 @@ class FieldInfo:
     options: Optional[list[tuple[str, str]]] = None
     translations: Optional[dict[str, FieldInfo]] = None
     description: Optional[str] = None
+    depends_on: Optional[list[str]] = None
 
 
 InfoReturnType = dict[str, FieldInfo]
-InfoCallback = Callable[[FunctionEnv], InfoReturnType]
+InfoCallback = (
+    Callable[[FunctionEnv], InfoReturnType]
+    | Callable[[FunctionEnv, dict[str, typing.Any]], InfoReturnType]
+)
 
 
 class EbbotComponent(BaseModel):

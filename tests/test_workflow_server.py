@@ -266,6 +266,31 @@ def test_action_info_endpoint():
 
 
 @responses.activate
+def test_action_info_endpoint_with_selected_values():
+    id = mocks.id()
+    mocks.get_connection(id)
+    result = client.post(
+        f"connections/{id}/form/select_lesson",
+        json={"selected": {"module": "1011"}},
+    )
+    assert result.status_code == 200
+    data = result.json()
+    assert data["lesson"]["options"] == [["1011", "Selected module"]]
+    assert data["lesson"]["depends_on"] == ["module"]
+
+
+@responses.activate
+def test_action_info_endpoint_rejects_non_object_selected_values():
+    id = mocks.id()
+    mocks.get_connection(id)
+    result = client.post(
+        f"connections/{id}/form/select_lesson",
+        json={"selected": ["1011"]},
+    )
+    assert result.status_code == 422
+
+
+@responses.activate
 def test_action_endpoint_missing_connection():
     responses.get(
         url="http://localhost:9000/connections/a897cef1-f953-44c3-a054-6290503c54a5",
