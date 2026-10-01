@@ -1,8 +1,9 @@
+from fastapi import APIRouter
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 import logging
 import responses
-from pytest import raises
+from pytest import mark, raises
 import json
 import mocks
 from integrations_sdk.server import start_workflow_server
@@ -606,8 +607,98 @@ def test_auth_token_required():
     mocks.get_connection(connectionId)
     mocks.get_subscription(connectionId, subscriptionId)
     mocks.engine_callback()
-    trigger = client.post(f"/hook-trigger-env-secret/{subscriptionId}", json=body)
+    trigger = secure_client.post(
+        f"/hook-trigger-env-secret/{subscriptionId}", json=body
+    )
     assert trigger.status_code == 200
+
+
+@mark.parametrize(
+    "method,path",
+    [
+        ("GET", "/components"),
+        ("POST", "/call"),
+        ("POST", "/connections"),
+        ("GET", "/connections/test-connection"),
+        ("POST", "/connections/test-connection/call/say_hello"),
+        ("GET", "/connections/test-connection/form/say_a_word"),
+        ("POST", "/connections/test-connection/form/select_lesson"),
+        ("GET", "/connections/test-connection/subscriptions"),
+        ("POST", "/connections/test-connection/subscriptions/hook_trigger"),
+        ("GET", "/connections/test-connection/subscriptions/test-subscription"),
+        ("DELETE", "/connections/test-connection/subscriptions/test-subscription"),
+    ],
+)
+def test_sdk_routes_require_auth_token(method, path):
+    secure_app = start_workflow_server(
+        "fns", "http://localhost:9000", mocks.key, auth_token="supersecret"
+    )
+    secure_client = TestClient(secure_app)
+
+    for headers in ({}, {"Authorization": "Bearer wrong"}):
+        response = secure_client.request(method, path, headers=headers, json={})
+        assert response.status_code == 401
+        assert response.json() == {"detail": "Unauthorized"}
+
+
+def test_user_routes_bypass_sdk_auth_token():
+    secure_app = start_workflow_server(
+        "fns", "http://localhost:9000", mocks.key, auth_token="supersecret"
+    )
+
+    @secure_app.post("/manifest")
+    def custom_webhook() -> dict[str, str]:
+        return {"status": "received"}
+
+    router = APIRouter()
+
+    @router.post("/connections/webhooks/{provider}")
+    def provider_webhook(provider: str) -> dict[str, str]:
+        return {"provider": provider}
+
+    secure_app.include_router(router)
+    secure_client = TestClient(secure_app)
+
+    for headers in ({}, {"Authorization": "Bearer provider-token"}):
+        response = secure_client.post("/manifest", headers=headers)
+        assert response.status_code == 200
+        assert response.json() == {"status": "received"}
+        response = secure_client.post("/connections/webhooks/example", headers=headers)
+        assert response.status_code == 200
+        assert response.json() == {"provider": "example"}
+
+    assert secure_client.get("/manifest").status_code == 401
+
+
+@responses.activate
+def test_multiple_trigger_handlers_bypass_auth_token():
+    secure_app = start_workflow_server(
+        "fns", "http://localhost:9000", mocks.key, auth_token="supersecret"
+    )
+    secure_client = TestClient(secure_app)
+    connection_id = mocks.id()
+    subscription_id = mocks.id()
+    mocks.get_connection(connection_id)
+    mocks.get_subscription(connection_id, subscription_id)
+    mocks.get_subscriptions(
+        subscriptions=[
+            {
+                **mocks.default_subscription_data,
+                "connectionId": connection_id,
+                "id": subscription_id,
+            }
+        ],
+        total=1,
+        name="hook_trigger",
+    )
+    callback = mocks.engine_callback()
+
+    response = secure_client.post(
+        "/multiple-triggers",
+        json={"type": "hook_trigger", "messageId": "myid", "message": "Hello"},
+    )
+    assert response.status_code == 200
+    assert callback.call_count == 1
 
 
 def test_auth_token_logs_failed_requests(caplog):

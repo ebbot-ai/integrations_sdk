@@ -2,7 +2,7 @@ from dataclasses import dataclass, asdict
 from inspect import signature
 import logging
 from typing import Annotated, Callable, Optional, Union, Type, Any, Generator
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
 from pydantic import BaseModel, ValidationError, field_validator
 from requests import request
 from uuid import uuid4
@@ -113,7 +113,9 @@ def workflow_trigger(
     return decorator
 
 
-def subscription_endpoint(app: FastAPI, storage: WorkflowStorage, trigger: Trigger):
+def subscription_endpoint(
+    app: FastAPI | APIRouter, storage: WorkflowStorage, trigger: Trigger
+):
     class SubscriptionData(BaseModel):
         secrets: Annotated[BaseModel, trigger.triggerSecretsType]
         options: Annotated[BaseModel, trigger.triggerOptionsType]
@@ -171,7 +173,7 @@ class TriggerMetadata(BaseModel):
 
 
 def subscription_endpoints(
-    app: FastAPI, storage: WorkflowStorage, triggers: dict[str, Trigger]
+    app: FastAPI | APIRouter, storage: WorkflowStorage, triggers: dict[str, Trigger]
 ):
     for _, trigger in triggers.items():
         subscription_endpoint(app, storage, trigger)

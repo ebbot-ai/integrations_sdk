@@ -5,8 +5,7 @@ from types import ModuleType
 import typing
 from typing import Optional, Protocol, Type, TypeVar
 
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel
 
 from integrations_sdk.actions import action_endpoints
@@ -164,6 +163,12 @@ def start_workflow_server(
     author: Optional[str] = None,
     url: Optional[str] = None,
 ):
+    """Create a workflow app with optional bearer authentication for SDK endpoints.
+
+    Health checks, FastAPI docs, and user-defined routes (including trigger
+    webhooks) do not require the SDK token. Webhook handlers must implement
+    any authentication required by their provider.
+    """
     if dev_mode:
         storage = DevServerWorkflowStorage()
     else:
@@ -185,10 +190,7 @@ def start_workflow_server(
 
     if auth_token:
 
-        @app.middleware("http")
-        async def _auth_middleware(request: Request, call_next):
-            if request.url.path in HEALTH_ENDPOINTS:
-                return await call_next(request)
+        async def require_auth(request: Request) -> None:
             auth_header = request.headers.get("Authorization")
             expected = f"Bearer {auth_token}"
             if auth_header != expected:
@@ -199,26 +201,24 @@ def start_workflow_server(
                     request.client.host if request.client else "unknown",
                     "missing" if auth_header is None else "invalid",
                 )
-                return JSONResponse({"detail": "Unauthorized"}, status_code=401)
-            return await call_next(request)
+                raise HTTPException(status_code=401, detail="Unauthorized")
+
+        sdk_router = APIRouter(dependencies=[Depends(require_auth)])
+    else:
+        sdk_router = APIRouter()
 
     _register_request_logging_middleware(app)
 
-    tool_endpoints(app, fns)
+    tool_endpoints(sdk_router, fns)
     connection_endpoints(
-        app, storage, options, secrets, validator, post_install_instructions
+        sdk_router, storage, options, secrets, validator, post_install_instructions
     )
-    action_endpoints(app, storage, list(fns.values()))
+    action_endpoints(sdk_router, storage, list(fns.values()))
 
     if len(triggers) > 0:
-        register_triggers(app, storage, storage_server_key, list(triggers.values()))
-        subscription_endpoints(app, storage, triggers)
-    if len(triggers_handlers.values()) > 0:
-        register_triggers_handlers(
-            app, storage, storage_server_key, triggers, list(triggers_handlers.values())
-        )
+        subscription_endpoints(sdk_router, storage, triggers)
 
-    @app.get("/manifest")
+    @sdk_router.get("/manifest")
     def get_manifest():
         return create_manifest(
             list(fns.values()),
@@ -232,6 +232,16 @@ def start_workflow_server(
             email,
             author,
             url,
+        )
+
+    # Protect SDK endpoints only. Trigger callbacks and routes added by users
+    # receive the app without the SDK authentication dependency.
+    app.include_router(sdk_router)
+    if len(triggers) > 0:
+        register_triggers(app, storage, storage_server_key, list(triggers.values()))
+    if len(triggers_handlers.values()) > 0:
+        register_triggers_handlers(
+            app, storage, storage_server_key, triggers, list(triggers_handlers.values())
         )
 
     return app

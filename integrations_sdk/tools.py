@@ -1,6 +1,6 @@
 import inspect
 from typing import Any, Optional, TypedDict
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from pydantic import BaseModel, ValidationInfo, field_validator
 from integrations_sdk.ebbot import Bot, Chat, Company, Message, User
 from integrations_sdk.component import (
@@ -39,7 +39,7 @@ class ToolCallResult(BaseModel):
     actions: Optional[Actions] = None
 
 
-def tool_endpoints(app: FastAPI, fns: dict[str, EbbotComponent]):
+def tool_endpoints(app: FastAPI | APIRouter, fns: dict[str, EbbotComponent]):
     class ToolCall(BaseModel):
         name: str
         ebbot_data: EbbotArguments

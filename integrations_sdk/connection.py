@@ -1,5 +1,5 @@
 from typing import Annotated, Any, Callable, Optional, Type
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
 from pydantic import BaseModel, ValidationError, model_validator
 from integrations_sdk.component import FunctionEnv
 from integrations_sdk.errors import SafeValidationError
@@ -19,7 +19,7 @@ PostInstallInstructionsCallback = Callable[[Connection, GetPostInstallEnvFn], st
 
 
 def connection_endpoints(
-    app: FastAPI,
+    app: FastAPI | APIRouter,
     storage: WorkflowStorage,
     optionsType: Optional[Type[BaseModel]] = EmptyOptions,
     secretsType: Optional[Type[BaseModel]] = EmptyOptions,
