@@ -2,7 +2,7 @@ import logging
 from inspect import signature
 from typing import Any, Callable, cast
 
-from fastapi import Body, Depends, FastAPI, HTTPException
+from fastapi import APIRouter, Body, Depends, FastAPI, HTTPException
 
 from integrations_sdk.component import EbbotComponent, InfoReturnType
 import jsonschema
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def _single_action_endpoints(
-    app: FastAPI, storage: WorkflowStorage, fn: EbbotComponent
+    app: FastAPI | APIRouter, storage: WorkflowStorage, fn: EbbotComponent
 ):
     schema = fn.llm_schema()
     json_schema = schema["function"]["parameters"]
@@ -71,7 +71,9 @@ def _single_action_endpoints(
             return form_info(connection_id, selected)
 
 
-def action_endpoints(app: FastAPI, storage: WorkflowStorage, fns: list[EbbotComponent]):
+def action_endpoints(
+    app: FastAPI | APIRouter, storage: WorkflowStorage, fns: list[EbbotComponent]
+):
     for fn in fns:
         if len(fn.ebbot_arguments) == 0:
             _single_action_endpoints(app, storage, fn)
