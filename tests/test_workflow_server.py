@@ -34,6 +34,11 @@ client = TestClient(app)
 json_body = {"options": {"notSecret": "asdf"}, "secrets": {"secret": "asdfasdf"}}
 
 
+def json_from_request_body(body):
+    assert isinstance(body, (str, bytes, bytearray))
+    return json.loads(body)
+
+
 @responses.activate
 def test_health_endpoints():
     liveness_response = client.get("/liveness")
@@ -351,7 +356,7 @@ def test_save_subscription_trigger_created():
     assert result.status_code == 201
     assert patch_response.call_count == 1
     assert patch_response.calls[0].request.body is not None
-    response_data = json.loads(patch_response.calls[0].request.body)
+    response_data = json_from_request_body(patch_response.calls[0].request.body)
     assert response_data["options"]["extra_prop"] == "Property prop"
 
 
@@ -552,7 +557,7 @@ def test_trigger_subscription():
     assert trigger.status_code == 200
     assert res.call_count == 1
     assert res.calls[0].request.body is not None
-    parsed = json.loads(res.calls[0].request.body)
+    parsed = json_from_request_body(res.calls[0].request.body)
     assert parsed["metadata"]["referenceId"] == "myid"
     assert parsed["metadata"]["data"]["message"] == "This is my message"
 
@@ -811,7 +816,7 @@ def test_trigger_subscription_env():
     assert trigger.status_code == 200
     assert res.call_count == 1
     assert res.calls[0].request.body is not None
-    parsed = json.loads(res.calls[0].request.body)
+    parsed = json_from_request_body(res.calls[0].request.body)
     assert parsed["payload"]["option"] == "asdf"
     assert parsed["payload"]["secret"] == "asdfasdf"
 
@@ -843,7 +848,7 @@ def test_trigger_own_subscription_env():
     assert trigger.status_code == 200
     assert res.call_count == 1
     assert res.calls[0].request.body is not None
-    parsed = json.loads(res.calls[0].request.body)
+    parsed = json_from_request_body(res.calls[0].request.body)
     assert parsed["payload"]["option"] == "test"
     assert parsed["payload"]["secret"] == "test2"
 
@@ -882,7 +887,7 @@ def test_trigger_multiple_first():
     assert trigger.status_code == 200
     assert res.call_count == 1
     assert res.calls[0].request.body is not None
-    parsed = json.loads(res.calls[0].request.body)
+    parsed = json_from_request_body(res.calls[0].request.body)
     assert parsed["payload"]["messageId"] == "myid"
     assert parsed["payload"]["message"] == "This is my message"
 
@@ -914,7 +919,7 @@ def test_trigger_multiple_second():
     assert trigger.status_code == 200
     assert res.call_count == 1
     assert res.calls[0].request.body is not None
-    parsed = json.loads(res.calls[0].request.body)
+    parsed = json_from_request_body(res.calls[0].request.body)
     assert parsed["payload"]["option"] == "test"
     assert parsed["payload"]["secret"] == "test2"
 
@@ -954,7 +959,7 @@ def test_get_subscriptions_trigger():
     name_map = {sub_id: name for sub_id, name in id_pairs}
     for call in res.calls:
         assert call.request.body is not None
-        data = json.loads(call.request.body)
+        data = json_from_request_body(call.request.body)
         payload = data["payload"]
         assert payload["messageId"] in name_map
         assert payload["message"] == name_map[payload["messageId"]]
