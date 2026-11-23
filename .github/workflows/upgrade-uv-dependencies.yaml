@@ -28,12 +28,17 @@ jobs:
       - name: Upgrade dependencies
         run: uv sync --upgrade
 
+      - name: Format Python code with Ruff
+        run: uv run --locked ruff format
+
       - name: Open or update dependency pull request
         uses: peter-evans/create-pull-request@v8
         with:
-          add-paths: uv.lock
+          add-paths: |
+            uv.lock
+            :(glob)**/*.py
           branch: automation/uv-upgrade
           delete-branch: true
           commit-message: 'chore: upgrade Python dependencies'
           title: 'chore: upgrade Python dependencies'
-          body: Updates `uv.lock` by running `uv sync --upgrade`.
+          body: Updates `uv.lock` and applies any formatting changes from the upgraded Ruff version.
