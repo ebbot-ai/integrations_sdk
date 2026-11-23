@@ -1,0 +1,13 @@
+name: Upgrade Python dependencies
+
+on:
+  schedule:
+    - cron: '0 2 * * 1' # Mondays at 02:00 UTC
+  workflow_dispatch:
+
+jobs:
+  upgrade-dependencies:
+    uses: ebbot-ai/ci/.github/workflows/upgrade-uv-dependencies.yaml@main
+    permissions:
+      contents: write
+      pull-requests: write
