@@ -5,9 +5,35 @@ on:
     - cron: '0 2 * * 1' # Mondays at 02:00 UTC
   workflow_dispatch:
 
+concurrency:
+  group: upgrade-python-dependencies
+
 jobs:
   upgrade-dependencies:
-    uses: ebbot-ai/ci/.github/workflows/upgrade-uv-dependencies.yaml@main
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
+
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Upgrade dependencies
+        run: uv sync --upgrade
+
+      - name: Open or update dependency pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          add-paths: uv.lock
+          branch: automation/uv-upgrade
+          delete-branch: true
+          commit-message: 'chore: upgrade Python dependencies'
+          title: 'chore: upgrade Python dependencies'
+          body: Updates `uv.lock` by running `uv sync --upgrade`.
